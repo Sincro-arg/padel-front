@@ -1,0 +1,80 @@
+<div class="container rp">
+  <h1>Reportes mensuales</h1>
+
+  <section class="card rp__filters">
+    <div class="field rp__field">
+      <label for="rp-month">Mes</label>
+      <select id="rp-month" [ngModel]="month()" (ngModelChange)="month.set($event)">
+        <option [value]="1">Enero</option>
+        <option [value]="2">Febrero</option>
+        <option [value]="3">Marzo</option>
+        <option [value]="4">Abril</option>
+        <option [value]="5">Mayo</option>
+        <option [value]="6">Junio</option>
+        <option [value]="7">Julio</option>
+        <option [value]="8">Agosto</option>
+        <option [value]="9">Septiembre</option>
+        <option [value]="10">Octubre</option>
+        <option [value]="11">Noviembre</option>
+        <option [value]="12">Diciembre</option>
+      </select>
+    </div>
+    <div class="field rp__field">
+      <label for="rp-year">Año</label>
+      <input id="rp-year" type="number" [ngModel]="year()" (ngModelChange)="year.set($event)" />
+    </div>
+    <button type="button" class="btn btn-primary rp__go" (click)="load()">Ver reporte</button>
+  </section>
+
+  @if (loading()) {
+    <p class="rp__muted">Cargando reporte…</p>
+  } @else if (error()) {
+    <div class="banner banner-danger" role="alert">
+      {{ error() }}
+      <button type="button" class="btn btn-ghost rp__retry" (click)="load()">Reintentar</button>
+    </div>
+  } @else if (data(); as d) {
+    <section class="card rp__block">
+      <h2>Facturación del mes</h2>
+      <p class="rp__revenue">${{ d.totalRevenue }}</p>
+    </section>
+
+    <section class="card rp__block">
+      <h2>Ocupación por horario</h2>
+      @if (d.byHour.length === 0) {
+        <p class="rp__muted">No hay datos de ocupación para este mes.</p>
+      } @else {
+        <div class="rp__chart">
+          @for (h of d.byHour; track h.hour) {
+            <div class="rp__bar-col">
+              <span class="rp__bar-value">{{ (h.occupancyRate * 100).toFixed(0) }}%</span>
+              <div class="rp__bar-track">
+                <div class="rp__bar" [style.height]="barHeight(h.occupancyRate)"></div>
+              </div>
+              <span class="rp__bar-label">{{ h.hour }}h</span>
+            </div>
+          }
+        </div>
+      }
+    </section>
+
+    <section class="card rp__block">
+      <h2>Mejores clientes</h2>
+      @if (d.topCustomers.length === 0) {
+        <p class="rp__muted">No hay clientes registrados este mes.</p>
+      } @else {
+        <ul class="rp__list">
+          @for (c of d.topCustomers; track c.name) {
+            <li class="rp__row">
+              <div class="rp__row-info">
+                <span class="rp__row-name">{{ c.name }}</span>
+                <span class="rp__row-detail">{{ c.bookingsCount }} {{ c.bookingsCount === 1 ? 'reserva' : 'reservas' }}</span>
+              </div>
+              <span class="rp__row-amount">${{ c.totalSpent }}</span>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  }
+</div>

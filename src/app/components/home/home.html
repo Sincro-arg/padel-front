@@ -1,6 +1,89 @@
-<div class="container">
-  <div class="card home__card">
-    <h1>Hola, {{ user()?.name }}</h1>
-    <p>Ya estás adentro. Acá va a vivir la agenda del día.</p>
-  </div>
+<div class="container db">
+  <h1>Hola, {{ user()?.name }}</h1>
+
+  @if (loading()) {
+    <p class="db__muted">Cargando…</p>
+  } @else if (error()) {
+    <div class="banner banner-danger" role="alert">
+      {{ error() }}
+      <button type="button" class="btn btn-ghost db__retry" (click)="load()">Reintentar</button>
+    </div>
+  } @else if (data(); as d) {
+    <section class="card db__block">
+      <h2>Canchas ahora</h2>
+      @if (d.courts.length === 0) {
+        <p class="db__muted">Todavía no hay canchas cargadas.</p>
+      } @else {
+        <div class="db__courts">
+          @for (c of d.courts; track c.courtId) {
+            <div class="db__court" [class.db__court--occupied]="c.status === 'occupied'">
+              <span class="db__court-name">{{ c.courtName }}</span>
+              @if (c.status === 'occupied' && c.currentBooking; as b) {
+                <span class="db__badge db__badge--occupied">Ocupada</span>
+                <span class="db__court-detail">{{ b.customerName }} · {{ b.startHour }}-{{ b.endHour }}hs</span>
+              } @else {
+                <span class="db__badge db__badge--free">Libre</span>
+              }
+            </div>
+          }
+        </div>
+      }
+    </section>
+
+    <section class="card db__block">
+      <h2>Turnos de hoy</h2>
+      @if (d.todayBookings.length === 0) {
+        <p class="db__muted">No hay turnos cargados para hoy.</p>
+      } @else {
+        <ul class="db__list">
+          @for (b of d.todayBookings; track b.id) {
+            <li class="db__row" [class.db__row--cancelled]="b.status === 'cancelled'">
+              <span class="db__row-hour">{{ b.startHour }}-{{ b.endHour }}hs</span>
+              <div class="db__row-info">
+                <span class="db__row-name">{{ b.customerName }}</span>
+                <span class="db__row-detail">{{ b.courtName }}</span>
+              </div>
+              <span class="db__badge" [class.db__badge--ok]="b.paymentStatus === 'paid'" [class.db__badge--pending]="b.paymentStatus !== 'paid'">
+                {{ b.status === 'cancelled' ? 'Cancelado' : (b.paymentStatus === 'paid' ? 'Pagado' : b.paymentStatus === 'partial' ? 'Seña' : 'Pendiente') }}
+              </span>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    @if (isAdmin()) {
+      <section class="card db__block">
+        <h2>Caja de hoy</h2>
+        <div class="db__summary-grid">
+          <div class="db__summary-item">
+            <span class="db__summary-label">Ingresó hoy</span>
+            <span class="db__summary-value">${{ d.incomeToday }}</span>
+          </div>
+          <div class="db__summary-item db__summary-item--debt">
+            <span class="db__summary-label">Deuda total</span>
+            <span class="db__summary-value">${{ d.debtTotal }}</span>
+          </div>
+        </div>
+      </section>
+    }
+
+    <section class="card db__block">
+      <h2>Socios atrasados</h2>
+      @if (d.membersLate.length === 0) {
+        <p class="db__muted">No hay socios atrasados.</p>
+      } @else {
+        <ul class="db__list">
+          @for (m of d.membersLate; track m.id) {
+            <li class="db__row">
+              <div class="db__row-info">
+                <span class="db__row-name">{{ m.name }}</span>
+              </div>
+              <span class="db__badge db__badge--pending">Debe {{ m.monthsOwed }} {{ m.monthsOwed === 1 ? 'mes' : 'meses' }}</span>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  }
 </div>

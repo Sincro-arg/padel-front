@@ -1,4 +1,104 @@
-.home__card {
-  padding: 1.5rem;
-  margin-top: 1rem;
+.db__block {
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.db__muted {
+  color: var(--color-text-muted);
+  font-size: .9rem;
+}
+
+.db__retry { margin-left: .75rem; }
+
+.db__courts {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: .75rem;
+}
+.db__court {
+  display: flex;
+  flex-direction: column;
+  gap: .3rem;
+  padding: .85rem;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+}
+.db__court--occupied {
+  background: var(--color-warning-light);
+  border-color: color-mix(in srgb, var(--color-warning) 30%, transparent);
+}
+.db__court-name { font-weight: 700; }
+.db__court-detail { font-size: .8rem; color: var(--color-text-muted); }
+
+.db__summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: .75rem;
+}
+.db__summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: .15rem;
+  padding: .75rem;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+}
+.db__summary-label {
+  font-size: .75rem;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+.db__summary-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+.db__summary-item--debt { background: var(--color-warning-light); }
+.db__summary-item--debt .db__summary-value { color: var(--color-warning); }
+
+.db__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+}
+.db__row {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  flex-wrap: wrap;
+}
+.db__row--cancelled { opacity: .55; }
+.db__row-hour { font-weight: 700; min-width: 70px; }
+.db__row-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 160px;
+  min-width: 0;
+}
+.db__row-name { font-weight: 700; }
+.db__row-detail { font-size: .8rem; color: var(--color-text-muted); }
+
+.db__badge {
+  font-size: .75rem;
+  font-weight: 700;
+  padding: .3rem .6rem;
+  border-radius: 999px;
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+.db__badge--free { background: var(--color-primary-light); color: var(--color-primary-dark); }
+.db__badge--occupied { background: var(--color-warning-light); color: var(--color-warning); }
+.db__badge--ok { background: var(--color-primary-light); color: var(--color-primary-dark); }
+.db__badge--pending { background: var(--color-danger-light); color: var(--color-danger); }
+
+@media (min-width: 640px) {
+  .db__courts { grid-template-columns: repeat(4, 1fr); }
 }

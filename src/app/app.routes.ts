@@ -22,5 +22,10 @@ export const routes: Routes = [
     loadComponent: () => import('./components/tournaments/tournaments').then(m => m.Tournaments),
     canActivate: [authGuard, roleGuard('admin')],
   },
+  {
+    path: 'reportes',
+    loadComponent: () => import('./components/reports/reports').then(m => m.Reports),
+    canActivate: [authGuard, roleGuard('admin')],
+  },
   { path: '**', redirectTo: '' },
 ];
