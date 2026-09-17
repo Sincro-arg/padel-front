@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './guards/auth.guard';
+import { roleGuard } from './guards/role.guard';
 
 export const routes: Routes = [
   {
@@ -15,6 +16,11 @@ export const routes: Routes = [
     path: 'caja',
     loadComponent: () => import('./components/caja/caja').then(m => m.Caja),
     canActivate: [authGuard],
+  },
+  {
+    path: 'torneos',
+    loadComponent: () => import('./components/tournaments/tournaments').then(m => m.Tournaments),
+    canActivate: [authGuard, roleGuard('admin')],
   },
   { path: '**', redirectTo: '' },
 ];

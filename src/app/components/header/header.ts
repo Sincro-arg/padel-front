@@ -21,6 +21,7 @@ export class Header implements OnInit {
 
   readonly user = computed(() => this.auth.currentUser());
   readonly roleLabel = computed(() => ROLE_LABEL[this.user()?.role ?? ''] ?? '');
+  readonly isAdmin = computed(() => this.user()?.role === 'admin');
 
   readonly now = signal(new Date());
 

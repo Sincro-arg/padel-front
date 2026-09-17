@@ -1,0 +1,310 @@
+<div class="container tn">
+  <h1>Torneos</h1>
+
+  @if (successMessage()) {
+    <div class="banner banner-success" role="status">{{ successMessage() }}</div>
+  }
+
+  <section class="card tn__list">
+    <div class="tn__list-header">
+      <h2>Torneos</h2>
+      <button type="button" class="btn btn-primary" (click)="openNewTournament()">+ Nuevo torneo</button>
+    </div>
+
+    @if (loadingTournaments()) {
+      <p class="tn__muted">Cargando torneos…</p>
+    } @else if (errorTournaments()) {
+      <div class="banner banner-danger" role="alert">
+        {{ errorTournaments() }}
+        <button type="button" class="btn btn-ghost tn__retry" (click)="loadTournaments()">Reintentar</button>
+      </div>
+    } @else if (tournaments().length === 0) {
+      <p class="tn__muted">Todavía no hay torneos cargados.</p>
+    } @else {
+      <ul class="tn__items">
+        @for (t of tournaments(); track t.id) {
+          <li class="tn__item" [class.tn__item--active]="selectedId() === t.id">
+            <button type="button" class="tn__item-main" (click)="selectTournament(t)">
+              <span class="tn__item-name">{{ t.name }}</span>
+              <span class="tn__item-detail">{{ t.date }} · Inscripción ${{ t.registrationFee }}</span>
+            </button>
+            <div class="tn__item-actions">
+              <button type="button" class="btn btn-ghost" (click)="openEditTournament(t)">Editar</button>
+              @if (deleteTournamentId() === t.id) {
+                <span class="tn__confirm">
+                  ¿Eliminar?
+                  <button type="button" class="btn btn-danger" [disabled]="deletingTournament()" (click)="confirmDeleteTournament()">
+                    {{ deletingTournament() ? 'Eliminando…' : 'Sí' }}
+                  </button>
+                  <button type="button" class="btn btn-ghost" [disabled]="deletingTournament()" (click)="cancelDeleteTournament()">No</button>
+                </span>
+              } @else {
+                <button type="button" class="btn btn-danger" (click)="askDeleteTournament(t.id)">Eliminar</button>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  @if (selectedTournament(); as t) {
+    <section class="card tn__detail">
+      <div class="tn__detail-header">
+        <h2>{{ t.name }}</h2>
+        <button type="button" class="btn btn-ghost" (click)="closeDetail()">Cerrar</button>
+      </div>
+
+      <!-- Parejas -->
+      <div class="tn__block">
+        <div class="tn__block-header">
+          <h3>Parejas inscriptas</h3>
+          <button type="button" class="btn btn-accent" (click)="openPairForm()">+ Inscribir pareja</button>
+        </div>
+
+        @if (loadingPairs()) {
+          <p class="tn__muted">Cargando parejas…</p>
+        } @else if (errorPairs()) {
+          <div class="banner banner-danger" role="alert">
+            {{ errorPairs() }}
+            <button type="button" class="btn btn-ghost tn__retry" (click)="loadPairs()">Reintentar</button>
+          </div>
+        } @else if (pairs().length === 0) {
+          <p class="tn__muted">Todavía no hay parejas inscriptas.</p>
+        } @else {
+          <ul class="tn__items">
+            @for (p of pairs(); track p.id) {
+              <li class="tn__item">
+                <div class="tn__item-main tn__item-main--static">
+                  <span class="tn__item-name">{{ p.player1 }} / {{ p.player2 }}</span>
+                  <span class="tn__item-detail">
+                    @if (p.paid) {
+                      <span class="tn__badge tn__badge--ok">Pagó ({{ p.paymentMethod }})</span>
+                    } @else {
+                      <span class="tn__badge tn__badge--debt">Debe inscripción</span>
+                    }
+                  </span>
+                </div>
+                <div class="tn__item-actions">
+                  @if (deletePairId() === p.id) {
+                    <span class="tn__confirm">
+                      ¿Eliminar?
+                      <button type="button" class="btn btn-danger" [disabled]="deletingPair()" (click)="confirmDeletePair()">
+                        {{ deletingPair() ? 'Eliminando…' : 'Sí' }}
+                      </button>
+                      <button type="button" class="btn btn-ghost" [disabled]="deletingPair()" (click)="cancelDeletePair()">No</button>
+                    </span>
+                  } @else {
+                    <button type="button" class="btn btn-danger" (click)="askDeletePair(p.id)">Eliminar</button>
+                  }
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+
+      <!-- Fixture -->
+      <div class="tn__block">
+        <div class="tn__block-header">
+          <h3>Fixture</h3>
+          <button type="button" class="btn btn-accent" [disabled]="pairs().length < 2" (click)="openMatchForm()">
+            + Cargar partido
+          </button>
+        </div>
+        @if (pairs().length < 2) {
+          <p class="tn__muted">Inscribí al menos dos parejas para armar el fixture.</p>
+        }
+
+        @if (loadingMatches()) {
+          <p class="tn__muted">Cargando fixture…</p>
+        } @else if (errorMatches()) {
+          <div class="banner banner-danger" role="alert">
+            {{ errorMatches() }}
+            <button type="button" class="btn btn-ghost tn__retry" (click)="loadMatches()">Reintentar</button>
+          </div>
+        } @else if (matches().length === 0) {
+          <p class="tn__muted">Todavía no hay partidos cargados.</p>
+        } @else {
+          <ul class="tn__items">
+            @for (m of matches(); track m.id) {
+              <li class="tn__match">
+                <span class="tn__match-round">{{ m.round }}</span>
+                <div class="tn__match-pairs">
+                  <span [class.tn__match-winner]="m.winnerPairId === m.pair1Id">{{ pairName(m.pair1Id) }}</span>
+                  <span class="tn__match-vs">vs</span>
+                  <span [class.tn__match-winner]="m.winnerPairId === m.pair2Id">{{ pairName(m.pair2Id) }}</span>
+                </div>
+                <div class="tn__match-result">
+                  @if (m.winnerPairId) {
+                    <span class="tn__badge tn__badge--ok">{{ m.score }} · Ganó {{ pairName(m.winnerPairId) }}</span>
+                  } @else {
+                    <span class="tn__badge tn__badge--pending">Pendiente</span>
+                  }
+                </div>
+                <button type="button" class="btn btn-ghost" (click)="openResult(m)">
+                  {{ m.winnerPairId ? 'Editar resultado' : 'Cargar resultado' }}
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    </section>
+  }
+</div>
+
+<!-- Modal: alta/edición de torneo -->
+@if (showTournamentForm()) {
+  <div class="tn__overlay" (click)="closeTournamentForm()">
+    <div class="tn__modal card" (click)="$event.stopPropagation()">
+      <h2>{{ editingTournamentId() ? 'Editar torneo' : 'Nuevo torneo' }}</h2>
+
+      @if (tError()) {
+        <div class="banner banner-danger" role="alert">{{ tError() }}</div>
+      }
+
+      <div class="field">
+        <label for="tn-name">Nombre</label>
+        <input id="tn-name" type="text" [ngModel]="tName()" (ngModelChange)="tName.set($event)" />
+      </div>
+      <div class="field">
+        <label for="tn-date">Fecha</label>
+        <input id="tn-date" type="date" [ngModel]="tDate()" (ngModelChange)="tDate.set($event)" />
+      </div>
+      <div class="field">
+        <label for="tn-fee">Inscripción por pareja</label>
+        <input id="tn-fee" type="number" min="0" step="0.01" [ngModel]="tFee()" (ngModelChange)="tFee.set($event)" />
+      </div>
+
+      <div class="tn__modal-actions">
+        <button type="button" class="btn btn-ghost" [disabled]="tSubmitting()" (click)="closeTournamentForm()">Cancelar</button>
+        <button type="button" class="btn btn-primary" [disabled]="tSubmitting()" (click)="submitTournament()">
+          {{ tSubmitting() ? 'Guardando…' : 'Guardar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal: inscripción de pareja -->
+@if (showPairForm()) {
+  <div class="tn__overlay" (click)="closePairForm()">
+    <div class="tn__modal card" (click)="$event.stopPropagation()">
+      <h2>Inscribir pareja</h2>
+
+      @if (pError()) {
+        <div class="banner banner-danger" role="alert">{{ pError() }}</div>
+      }
+
+      <div class="field">
+        <label for="tn-p1">Jugador 1</label>
+        <input id="tn-p1" type="text" [ngModel]="pPlayer1()" (ngModelChange)="pPlayer1.set($event)" />
+      </div>
+      <div class="field">
+        <label for="tn-p2">Jugador 2</label>
+        <input id="tn-p2" type="text" [ngModel]="pPlayer2()" (ngModelChange)="pPlayer2.set($event)" />
+      </div>
+      <div class="field">
+        <label>
+          <input type="checkbox" [ngModel]="pPaid()" (ngModelChange)="pPaid.set($event)" />
+          Ya pagó la inscripción
+        </label>
+      </div>
+      @if (pPaid()) {
+        <div class="field">
+          <label for="tn-pmethod">Medio de pago</label>
+          <select id="tn-pmethod" [ngModel]="pMethod()" (ngModelChange)="pMethod.set($event)">
+            @for (m of methods; track m.value) {
+              <option [value]="m.value">{{ m.label }}</option>
+            }
+          </select>
+        </div>
+      }
+
+      <div class="tn__modal-actions">
+        <button type="button" class="btn btn-ghost" [disabled]="pSubmitting()" (click)="closePairForm()">Cancelar</button>
+        <button type="button" class="btn btn-primary" [disabled]="pSubmitting()" (click)="submitPair()">
+          {{ pSubmitting() ? 'Guardando…' : 'Inscribir' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal: alta de partido -->
+@if (showMatchForm()) {
+  <div class="tn__overlay" (click)="closeMatchForm()">
+    <div class="tn__modal card" (click)="$event.stopPropagation()">
+      <h2>Cargar partido</h2>
+
+      @if (mError()) {
+        <div class="banner banner-danger" role="alert">{{ mError() }}</div>
+      }
+
+      <div class="field">
+        <label for="tn-round">Ronda</label>
+        <input id="tn-round" type="text" placeholder="Ej: Cuartos de final" [ngModel]="mRound()" (ngModelChange)="mRound.set($event)" />
+      </div>
+      <div class="field">
+        <label for="tn-pair1">Pareja 1</label>
+        <select id="tn-pair1" [ngModel]="mPair1Id()" (ngModelChange)="mPair1Id.set($event)">
+          <option value="">Elegir pareja…</option>
+          @for (p of pairs(); track p.id) {
+            <option [value]="p.id">{{ p.player1 }} / {{ p.player2 }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <label for="tn-pair2">Pareja 2</label>
+        <select id="tn-pair2" [ngModel]="mPair2Id()" (ngModelChange)="mPair2Id.set($event)">
+          <option value="">Elegir pareja…</option>
+          @for (p of pairs(); track p.id) {
+            <option [value]="p.id">{{ p.player1 }} / {{ p.player2 }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="tn__modal-actions">
+        <button type="button" class="btn btn-ghost" [disabled]="mSubmitting()" (click)="closeMatchForm()">Cancelar</button>
+        <button type="button" class="btn btn-primary" [disabled]="mSubmitting()" (click)="submitMatch()">
+          {{ mSubmitting() ? 'Guardando…' : 'Agregar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal: carga de resultado -->
+@if (resultMatch(); as m) {
+  <div class="tn__overlay" (click)="closeResult()">
+    <div class="tn__modal card" (click)="$event.stopPropagation()">
+      <h2>Resultado</h2>
+      <p class="tn__muted">{{ m.round }} · {{ pairName(m.pair1Id) }} vs {{ pairName(m.pair2Id) }}</p>
+
+      @if (rError()) {
+        <div class="banner banner-danger" role="alert">{{ rError() }}</div>
+      }
+
+      <div class="field">
+        <label for="tn-score">Score</label>
+        <input id="tn-score" type="text" placeholder="Ej: 6-3 6-4" [ngModel]="rScore()" (ngModelChange)="rScore.set($event)" />
+      </div>
+      <div class="field">
+        <label for="tn-winner">Ganador</label>
+        <select id="tn-winner" [ngModel]="rWinnerPairId()" (ngModelChange)="rWinnerPairId.set($event)">
+          <option value="">Elegir ganador…</option>
+          <option [value]="m.pair1Id">{{ pairName(m.pair1Id) }}</option>
+          <option [value]="m.pair2Id">{{ pairName(m.pair2Id) }}</option>
+        </select>
+      </div>
+
+      <div class="tn__modal-actions">
+        <button type="button" class="btn btn-ghost" [disabled]="rSubmitting()" (click)="closeResult()">Cancelar</button>
+        <button type="button" class="btn btn-primary" [disabled]="rSubmitting()" (click)="submitResult()">
+          {{ rSubmitting() ? 'Guardando…' : 'Guardar resultado' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
