@@ -13,6 +13,11 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'reservas',
+    loadComponent: () => import('./components/reservas/reservas').then(m => m.Reservas),
+    canActivate: [authGuard],
+  },
+  {
     path: 'caja',
     loadComponent: () => import('./components/caja/caja').then(m => m.Caja),
     canActivate: [authGuard],

@@ -1,0 +1,237 @@
+<div class="container rsv">
+  <div class="rsv__header">
+    <h1>Reservas</h1>
+    <button type="button" class="btn btn-primary" [disabled]="courts().length === 0" (click)="openNew()">
+      + Nueva reserva
+    </button>
+  </div>
+
+  @if (successMessage()) {
+    <div class="banner banner-success" role="status">{{ successMessage() }}</div>
+  }
+
+  <div class="field rsv__date-field">
+    <label for="rsv-date">Fecha</label>
+    <input id="rsv-date" type="date" [ngModel]="date()" (ngModelChange)="changeDate($event)" />
+  </div>
+
+  @if (loading()) {
+    <p class="rsv__muted">Cargando reservas…</p>
+  } @else if (error()) {
+    <div class="banner banner-danger" role="alert">
+      {{ error() }}
+      <button type="button" class="btn btn-ghost rsv__retry" (click)="load()">Reintentar</button>
+    </div>
+  } @else if (courts().length === 0) {
+    <p class="rsv__muted">Todavía no hay canchas cargadas.</p>
+  } @else {
+    <div class="rsv__grid-wrap card">
+      <table class="rsv__grid">
+        <thead>
+          <tr>
+            <th class="rsv__hour-col">Hora</th>
+            @for (c of courts(); track c.id) {
+              <th>{{ c.name }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (h of hours; track h) {
+            <tr>
+              <td class="rsv__hour-col">{{ h }}:00</td>
+              @for (c of courts(); track c.id) {
+                @if (cellBooking(c.id, h); as b) {
+                  @if (isCellStart(b, h)) {
+                    <td
+                      class="rsv__cell rsv__cell--busy"
+                      [class.rsv__cell--cancelled]="b.status === 'cancelled'"
+                      (click)="openDetail(b)"
+                    >
+                      <span class="rsv__cell-name">{{ b.customerName }}</span>
+                      <span class="rsv__cell-hours">{{ b.startHour }}-{{ b.endHour }}hs</span>
+                      <span class="rsv__cell-badges">
+                        @if (b.isRecurring) {
+                          <span class="rsv__badge rsv__badge--fixed">Fijo</span>
+                        }
+                        <span
+                          class="rsv__badge"
+                          [class.rsv__badge--ok]="b.paymentStatus === 'paid'"
+                          [class.rsv__badge--pending]="b.paymentStatus !== 'paid'"
+                        >
+                          {{ b.paymentStatus === 'paid' ? 'Pagado' : b.paymentStatus === 'partial' ? 'Seña' : 'Pendiente' }}
+                        </span>
+                      </span>
+                    </td>
+                  } @else {
+                    <td class="rsv__cell rsv__cell--busy rsv__cell--continues" (click)="openDetail(b)"></td>
+                  }
+                } @else {
+                  <td class="rsv__cell rsv__cell--free" (click)="openNew(c.id, h)">
+                    <span class="rsv__cell-add">+</span>
+                  </td>
+                }
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+<!-- Modal: alta/edición de reserva -->
+@if (showForm()) {
+  <div class="rsv__overlay" (click)="closeForm()">
+    <div class="rsv__modal card" (click)="$event.stopPropagation()">
+      <h2>{{ editingId() ? 'Editar reserva' : 'Nueva reserva' }}</h2>
+
+      @if (fError()) {
+        <div class="banner banner-danger" role="alert">{{ fError() }}</div>
+      }
+
+      <div class="field">
+        <label for="rsv-court">Cancha</label>
+        <select id="rsv-court" [ngModel]="fCourtId()" (ngModelChange)="fCourtId.set($event)">
+          @for (c of courts(); track c.id) {
+            <option [value]="c.id">{{ c.name }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="rsv-name">Nombre</label>
+        <input id="rsv-name" type="text" [ngModel]="fCustomerName()" (ngModelChange)="fCustomerName.set($event)" />
+      </div>
+
+      <div class="field">
+        <label for="rsv-phone">Teléfono</label>
+        <input id="rsv-phone" type="tel" [ngModel]="fCustomerPhone()" (ngModelChange)="fCustomerPhone.set($event)" />
+      </div>
+
+      <div class="field">
+        <label for="rsv-fdate">Fecha</label>
+        <input id="rsv-fdate" type="date" [ngModel]="fDate()" (ngModelChange)="fDate.set($event)" />
+      </div>
+
+      <div class="rsv__hour-fields">
+        <div class="field">
+          <label for="rsv-start">Desde</label>
+          <select id="rsv-start" [ngModel]="fStartHour()" (ngModelChange)="fStartHour.set($event)">
+            @for (h of hours; track h) {
+              <option [ngValue]="h">{{ h }}:00</option>
+            }
+          </select>
+        </div>
+        <div class="field">
+          <label for="rsv-end">Hasta</label>
+          <select id="rsv-end" [ngModel]="fEndHour()" (ngModelChange)="fEndHour.set($event)">
+            @for (h of hours; track h) {
+              <option [ngValue]="h + 1">{{ h + 1 }}:00</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="rsv-member">Socio (opcional)</label>
+        <select id="rsv-member" [ngModel]="fMemberId()" (ngModelChange)="fMemberId.set($event)">
+          <option value="">Sin socio</option>
+          @for (m of members(); track m.id) {
+            <option [value]="m.id">{{ memberLabel(m) }}</option>
+          }
+        </select>
+        @if (selectedMember()?.isBlocked) {
+          <p class="field-error">
+            Este socio debe {{ selectedMember()?.monthsOwed }} cuotas y no puede reservar hasta ponerse al día.
+          </p>
+        }
+      </div>
+
+      @if (!editingId()) {
+        <div class="field">
+          <label class="rsv__checkbox-label">
+            <input type="checkbox" [ngModel]="fRecurring()" (ngModelChange)="fRecurring.set($event)" />
+            Es turno fijo semanal (se generan las próximas 8 semanas)
+          </label>
+        </div>
+      }
+
+      <div class="rsv__modal-actions">
+        <button type="button" class="btn btn-ghost" [disabled]="fSubmitting()" (click)="closeForm()">Cancelar</button>
+        <button type="button" class="btn btn-primary" [disabled]="fSubmitting()" (click)="submitForm()">
+          {{ fSubmitting() ? 'Guardando…' : 'Guardar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal: detalle / edición / cancelación / borrado -->
+@if (detailBooking(); as b) {
+  <div class="rsv__overlay" (click)="closeDetail()">
+    <div class="rsv__modal card" (click)="$event.stopPropagation()">
+      <h2>{{ b.customerName }}</h2>
+      <p class="rsv__muted">
+        {{ b.date }} · {{ b.startHour }}-{{ b.endHour }}hs
+        @if (b.isRecurring) {
+          · Turno fijo
+        }
+      </p>
+      <p class="rsv__muted">Tel: {{ b.customerPhone || '—' }}</p>
+      <p>
+        Total: ${{ b.totalAmount }} ·
+        <span
+          class="rsv__badge"
+          [class.rsv__badge--ok]="b.paymentStatus === 'paid'"
+          [class.rsv__badge--pending]="b.paymentStatus !== 'paid'"
+        >
+          {{ b.paymentStatus === 'paid' ? 'Pagado' : b.paymentStatus === 'partial' ? 'Seña ($' + b.paidAmount + ')' : 'Pendiente' }}
+        </span>
+      </p>
+
+      @if (b.status === 'cancelled') {
+        <div class="banner banner-warning" role="status">
+          Cancelada
+          @if (b.cancellationFee > 0) {
+            · Cargo por cancelación: ${{ b.cancellationFee }}
+          }
+        </div>
+      }
+
+      @if (detailError()) {
+        <div class="banner banner-danger" role="alert">{{ detailError() }}</div>
+      }
+
+      @if (b.status === 'confirmed') {
+        @if (!cancelConfirming() && !deleteConfirming()) {
+          <div class="rsv__modal-actions rsv__modal-actions--wrap">
+            <button type="button" class="btn btn-ghost" (click)="closeDetail()">Cerrar</button>
+            <button type="button" class="btn btn-accent" (click)="openEdit(b)">Editar</button>
+            <button type="button" class="btn btn-ghost rsv__delete-link" (click)="askDelete()">Eliminar carga</button>
+            <button type="button" class="btn btn-danger" (click)="askCancel()">Cancelar reserva</button>
+          </div>
+        } @else if (cancelConfirming()) {
+          <p>¿Cancelar esta reserva? Si faltan menos de 4hs para el inicio, se cobra el 50% como cargo por cancelación.</p>
+          <div class="rsv__modal-actions">
+            <button type="button" class="btn btn-ghost" [disabled]="cancelSubmitting()" (click)="cancelCancelConfirm()">Volver</button>
+            <button type="button" class="btn btn-danger" [disabled]="cancelSubmitting()" (click)="confirmCancel()">
+              {{ cancelSubmitting() ? 'Cancelando…' : 'Sí, cancelar' }}
+            </button>
+          </div>
+        } @else {
+          <p>¿Eliminar esta reserva por completo? Usalo solo para corregir un error de carga: no queda ningún registro.</p>
+          <div class="rsv__modal-actions">
+            <button type="button" class="btn btn-ghost" [disabled]="deleteSubmitting()" (click)="cancelDeleteConfirm()">Volver</button>
+            <button type="button" class="btn btn-danger" [disabled]="deleteSubmitting()" (click)="confirmDelete()">
+              {{ deleteSubmitting() ? 'Eliminando…' : 'Sí, eliminar' }}
+            </button>
+          </div>
+        }
+      } @else {
+        <div class="rsv__modal-actions">
+          <button type="button" class="btn btn-ghost" (click)="closeDetail()">Cerrar</button>
+        </div>
+      }
+    </div>
+  </div>
+}
