@@ -1,0 +1,27 @@
+# Compiled output
+/dist
+/tmp
+/out-tsc
+/.angular
+
+# Node
+/node_modules
+npm-debug.log
+yarn-error.log
+
+# IDEs
+.idea/
+.vscode/
+*.sublime-workspace
+
+# Misc
+/.sass-cache
+/connect.lock
+/coverage
+/libpeerconnection.log
+testem.log
+/typings
+
+# System files
+.DS_Store
+Thumbs.db

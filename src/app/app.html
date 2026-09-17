@@ -1,0 +1,17 @@
+@if (backendStatus.isDown() && !isLoginPage()) {
+  <div class="app__down-banner" role="alert">
+    No se pudo conectar con el servidor. Los cambios no se van a guardar hasta que vuelva la conexión.
+  </div>
+}
+
+@if (!isLoginPage()) {
+  <app-header />
+}
+
+<main class="app__main">
+  <router-outlet />
+</main>
+
+@if (!isLoginPage()) {
+  <app-footer />
+}

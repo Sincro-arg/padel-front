@@ -1,0 +1,78 @@
+.hd {
+  height: var(--header-h);
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: 0 .85rem;
+  background: var(--color-primary);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.hd__brand {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  color: #fff;
+  font-weight: 800;
+  font-size: 1.05rem;
+  letter-spacing: .01em;
+}
+.hd__brand:hover { text-decoration: none; }
+
+.hd__ball {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  box-shadow: inset -3px -3px 0 rgba(0,0,0,.1);
+  flex-shrink: 0;
+}
+
+.hd__clock {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.1;
+  font-size: .75rem;
+  opacity: .95;
+}
+.hd__date { text-transform: capitalize; }
+.hd__time { font-weight: 700; font-size: .95rem; }
+
+.hd__user {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+.hd__user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.1;
+}
+.hd__user-name { font-size: .85rem; font-weight: 700; }
+.hd__user-role { font-size: .7rem; opacity: .85; }
+
+.hd__logout {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  border: none;
+  background: rgba(255,255,255,.15);
+  color: #fff;
+  cursor: pointer;
+}
+.hd__logout:hover { background: rgba(255,255,255,.25); }
+
+@media (min-width: 640px) {
+  .hd { padding: 0 1.5rem; gap: 1.25rem; }
+  .hd__clock { display: flex; }
+}

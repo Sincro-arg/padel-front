@@ -1,0 +1,49 @@
+<div class="lg">
+  <form class="lg__card card" (ngSubmit)="submit()">
+    <div class="lg__brand">
+      <span class="lg__ball" aria-hidden="true"></span>
+      <h1 class="lg__title">Padel</h1>
+    </div>
+    <p class="lg__subtitle">Iniciá sesión para gestionar el club</p>
+
+    @if (backendStatus.isDown()) {
+      <div class="banner banner-warning" role="alert">
+        No se pudo conectar con el servidor. Verificá tu conexión e intentá de nuevo.
+      </div>
+    }
+
+    @if (error()) {
+      <div class="banner banner-danger" role="alert">{{ error() }}</div>
+    }
+
+    <div class="field">
+      <label for="username">Usuario</label>
+      <input
+        id="username"
+        name="username"
+        type="text"
+        autocomplete="username"
+        [(ngModel)]="username"
+        [disabled]="loading()"
+        required
+      />
+    </div>
+
+    <div class="field">
+      <label for="password">Contraseña</label>
+      <input
+        id="password"
+        name="password"
+        type="password"
+        autocomplete="current-password"
+        [(ngModel)]="password"
+        [disabled]="loading()"
+        required
+      />
+    </div>
+
+    <button type="submit" class="btn btn-primary lg__submit" [disabled]="loading()">
+      {{ loading() ? 'Ingresando…' : 'Ingresar' }}
+    </button>
+  </form>
+</div>

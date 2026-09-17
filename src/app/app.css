@@ -1,0 +1,18 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.app__main {
+  flex: 1;
+}
+
+.app__down-banner {
+  background: var(--color-warning-light);
+  color: var(--color-warning);
+  text-align: center;
+  font-size: .8rem;
+  font-weight: 600;
+  padding: .5rem .75rem;
+}

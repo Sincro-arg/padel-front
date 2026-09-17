@@ -1,0 +1,310 @@
+/* ══════════════════════════════════════════════════════════════════════
+   Padel — estilos globales. Paleta y tipografía propias, nada de default
+   del navegador: reset de inputs nativos (date, time, select, checkbox,
+   radio, file) incluido más abajo.
+   ══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Paleta: verde de cancha + pelota (lima) como acento */
+  --color-bg:            #f2f6f3;
+  --color-surface:       #ffffff;
+  --color-surface-2:     #eaf1ec;
+  --color-primary:       #0d7a4f;
+  --color-primary-dark:  #095c3c;
+  --color-primary-light: #e2f5ec;
+  --color-accent:        #c6e94a;
+  --color-accent-dark:   #a9cc2e;
+  --color-text:          #16211c;
+  --color-text-muted:    #5c6b64;
+  --color-border:        #d8e3dd;
+  --color-danger:        #c0392b;
+  --color-danger-light:  #fbe9e7;
+  --color-warning:       #b8790f;
+  --color-warning-light: #fbf0dc;
+  --color-success:       #0d7a4f;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  --shadow-sm: 0 1px 2px rgba(12, 30, 22, 0.07);
+  --shadow-md: 0 6px 20px rgba(12, 30, 22, 0.10);
+
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --header-h: 56px;
+  --footer-h: 48px;
+  /* Mínimo recomendado de zona táctil (WCAG) — la app se usa parado al lado de la cancha */
+  --tap-min: 44px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0 0 .5rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--color-text);
+}
+h1 { font-size: 1.5rem; }
+h2 { font-size: 1.25rem; }
+h3 { font-size: 1.1rem; }
+p  { margin: 0 0 .75rem; }
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+a:hover { text-decoration: underline; }
+
+::selection { background: var(--color-accent); color: var(--color-primary-dark); }
+
+/* ── Botones ─────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+  min-height: var(--tap-min);
+  padding: .6rem 1.1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  font-family: inherit;
+  font-size: .95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color .15s ease, border-color .15s ease, opacity .15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:disabled { opacity: .55; cursor: not-allowed; }
+
+.btn-primary { background: var(--color-primary); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--color-primary-dark); }
+
+.btn-accent { background: var(--color-accent); color: var(--color-primary-dark); }
+.btn-accent:hover:not(:disabled) { background: var(--color-accent-dark); }
+
+.btn-ghost { background: transparent; color: var(--color-primary); border-color: var(--color-border); }
+.btn-ghost:hover:not(:disabled) { background: var(--color-surface-2); }
+
+.btn-danger { background: var(--color-danger); color: #fff; }
+.btn-danger:hover:not(:disabled) { opacity: .9; }
+
+/* ── Tarjetas / superficies ──────────────────────────────────────────── */
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── Avisos ──────────────────────────────────────────────────────────── */
+.banner {
+  border-radius: var(--radius-md);
+  padding: .75rem 1rem;
+  font-size: .9rem;
+  border: 1px solid transparent;
+}
+.banner-danger  { background: var(--color-danger-light);  color: var(--color-danger);  border-color: color-mix(in srgb, var(--color-danger) 30%, transparent); }
+.banner-warning { background: var(--color-warning-light); color: var(--color-warning); border-color: color-mix(in srgb, var(--color-warning) 30%, transparent); }
+
+/* ══════════════════════════════════════════════════════════════════════
+   Formularios — reset de todo lo "nativo" del navegador
+   ══════════════════════════════════════════════════════════════════════ */
+
+label {
+  display: block;
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  margin-bottom: .3rem;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+select,
+textarea {
+  width: 100%;
+  min-height: var(--tap-min);
+  padding: .6rem .8rem;
+  /* 16px evita el auto-zoom de iOS Safari al enfocar un input */
+  font-size: 1rem;
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  outline: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+input::placeholder,
+textarea::placeholder { color: #8a9891; }
+
+input:disabled, select:disabled, textarea:disabled {
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+/* input[type=date] / input[type=time]: el navegador les mete tipografía y
+   colores propios (y en algunos hasta un ícono desalineado) — se homogeneiza. */
+input[type="date"],
+input[type="time"] {
+  color-scheme: light;
+}
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  padding: .2rem;
+  border-radius: var(--radius-sm);
+  filter: invert(29%) sepia(43%) saturate(1000%) hue-rotate(115deg) brightness(90%);
+}
+input[type="date"]::-webkit-datetime-edit,
+input[type="time"]::-webkit-datetime-edit {
+  padding: 0;
+}
+
+/* select: sacar la flecha del sistema operativo y poner una propia */
+select {
+  padding-right: 2.4rem;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%235c6b64' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right .85rem center;
+  background-size: 14px;
+  cursor: pointer;
+}
+select::-ms-expand { display: none; }
+
+/* checkbox: reemplazo completo por un cuadrado propio, con tilde propio */
+input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  flex-shrink: 0;
+  border: 2px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+  display: inline-grid;
+  place-content: center;
+  cursor: pointer;
+  transition: background-color .12s ease, border-color .12s ease;
+  vertical-align: middle;
+}
+input[type="checkbox"]::before {
+  content: "";
+  width: 12px;
+  height: 12px;
+  transform: scale(0);
+  transition: transform .12s ease-in;
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+  background: #fff;
+}
+input[type="checkbox"]:checked {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+input[type="checkbox"]:checked::before { transform: scale(1); }
+input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* radio: mismo criterio que el checkbox pero circular */
+input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  border: 2px solid var(--color-border);
+  border-radius: 50%;
+  background: var(--color-surface);
+  display: inline-grid;
+  place-content: center;
+  cursor: pointer;
+  vertical-align: middle;
+}
+input[type="radio"]::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transform: scale(0);
+  transition: transform .12s ease-in;
+  background: var(--color-primary);
+}
+input[type="radio"]:checked { border-color: var(--color-primary); }
+input[type="radio"]:checked::before { transform: scale(1); }
+input[type="radio"]:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+
+/* file: el botón nativo "Elegir archivo" no se puede tocar con CSS normal —
+   se estiliza vía ::file-selector-button */
+input[type="file"] {
+  width: 100%;
+  min-height: var(--tap-min);
+  padding: .45rem;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+  font-size: .85rem;
+  color: var(--color-text-muted);
+}
+input[type="file"]::file-selector-button {
+  border: none;
+  background: var(--color-primary);
+  color: #fff;
+  padding: .5rem 1rem;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-weight: 600;
+  font-size: .85rem;
+  margin-right: .75rem;
+  cursor: pointer;
+  transition: background-color .15s ease;
+}
+input[type="file"]::file-selector-button:hover { background: var(--color-primary-dark); }
+
+.field { margin-bottom: 1rem; }
+.field-error {
+  color: var(--color-danger);
+  font-size: .8rem;
+  margin-top: .3rem;
+}
+
+/* Layout mobile-first: la app arranca a ancho de teléfono y se agranda
+   después con media queries en cada componente. */
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1rem;
+}
