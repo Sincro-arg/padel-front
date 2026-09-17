@@ -1,0 +1,72 @@
+<div class="container cn">
+  <h1>Canchas</h1>
+
+  @if (successMessage()) {
+    <div class="banner banner-success" role="status">{{ successMessage() }}</div>
+  }
+
+  <section class="card cn__list">
+    <div class="cn__list-header">
+      <h2>Listado de canchas</h2>
+      <button type="button" class="btn btn-primary" (click)="openNew()">+ Nueva cancha</button>
+    </div>
+
+    @if (loading()) {
+      <p class="cn__muted">Cargando canchas…</p>
+    } @else if (error()) {
+      <div class="banner banner-danger" role="alert">
+        {{ error() }}
+        <button type="button" class="btn btn-ghost cn__retry" (click)="load()">Reintentar</button>
+      </div>
+    } @else if (courts().length === 0) {
+      <p class="cn__muted">Todavía no hay canchas cargadas.</p>
+    } @else {
+      <ul class="cn__items">
+        @for (c of courts(); track c.id) {
+          <li class="cn__item">
+            <span class="cn__item-name">{{ c.name }}</span>
+            <div class="cn__item-actions">
+              <button type="button" class="btn btn-ghost" (click)="openEdit(c)">Editar</button>
+              @if (deleteId() === c.id) {
+                <span class="cn__confirm">
+                  ¿Eliminar?
+                  <button type="button" class="btn btn-danger" [disabled]="deleting()" (click)="confirmDelete()">
+                    {{ deleting() ? 'Eliminando…' : 'Sí' }}
+                  </button>
+                  <button type="button" class="btn btn-ghost" [disabled]="deleting()" (click)="cancelDelete()">No</button>
+                </span>
+              } @else {
+                <button type="button" class="btn btn-danger" (click)="askDelete(c.id)">Eliminar</button>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+</div>
+
+<!-- Modal: alta/edición de cancha -->
+@if (showForm()) {
+  <div class="cn__overlay" (click)="closeForm()">
+    <div class="cn__modal card" (click)="$event.stopPropagation()">
+      <h2>{{ editingId() ? 'Editar cancha' : 'Nueva cancha' }}</h2>
+
+      @if (fError()) {
+        <div class="banner banner-danger" role="alert">{{ fError() }}</div>
+      }
+
+      <div class="field">
+        <label for="cn-name">Nombre</label>
+        <input id="cn-name" type="text" [ngModel]="fName()" (ngModelChange)="fName.set($event)" />
+      </div>
+
+      <div class="cn__modal-actions">
+        <button type="button" class="btn btn-ghost" [disabled]="fSubmitting()" (click)="closeForm()">Cancelar</button>
+        <button type="button" class="btn btn-primary" [disabled]="fSubmitting()" (click)="submitForm()">
+          {{ fSubmitting() ? 'Guardando…' : 'Guardar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

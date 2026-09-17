@@ -1,0 +1,125 @@
+.sc__list,
+.sc__detail {
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.sc__muted {
+  color: var(--color-text-muted);
+  font-size: .9rem;
+}
+
+.sc__list-header,
+.sc__detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  margin-bottom: .75rem;
+}
+.sc__list-header h2,
+.sc__detail-header h2 {
+  margin: 0;
+}
+
+.sc__items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+}
+
+.sc__item {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  flex-wrap: wrap;
+}
+.sc__item--active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+.sc__item--blocked {
+  border-color: var(--color-danger);
+}
+.sc__item-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 160px;
+  min-width: 0;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  padding: .25rem;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+}
+.sc__item-main:hover { background: var(--color-surface-2); }
+.sc__item-main--static { cursor: default; }
+.sc__item-main--static:hover { background: none; }
+.sc__item-name { font-weight: 700; }
+.sc__item-detail { font-size: .8rem; color: var(--color-text-muted); }
+
+.sc__item-status {
+  flex-shrink: 0;
+}
+
+.sc__item-actions {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.sc__confirm {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  font-size: .85rem;
+  color: var(--color-text-muted);
+}
+
+.sc__badge {
+  display: inline-block;
+  padding: .2rem .55rem;
+  border-radius: 999px;
+  font-size: .75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.sc__badge--ok { background: var(--color-primary-light); color: var(--color-primary-dark); }
+.sc__badge--warn { background: var(--color-warning-light); color: var(--color-warning); }
+.sc__badge--blocked { background: var(--color-danger-light); color: var(--color-danger); }
+
+.sc__retry { margin-left: .75rem; }
+
+.sc__overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(12, 30, 22, .45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 50;
+  overflow-y: auto;
+}
+.sc__modal {
+  width: 100%;
+  max-width: 420px;
+  padding: 1.5rem;
+  margin: auto;
+}
+.sc__modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: .6rem;
+  margin-top: 1rem;
+}

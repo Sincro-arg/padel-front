@@ -1,0 +1,180 @@
+<div class="container sc">
+  <h1>Socios</h1>
+
+  @if (successMessage()) {
+    <div class="banner banner-success" role="status">{{ successMessage() }}</div>
+  }
+
+  <section class="card sc__list">
+    <div class="sc__list-header">
+      <h2>Listado de socios</h2>
+      @if (isAdmin()) {
+        <button type="button" class="btn btn-primary" (click)="openNew()">+ Nuevo socio</button>
+      }
+    </div>
+
+    @if (loading()) {
+      <p class="sc__muted">Cargando socios…</p>
+    } @else if (error()) {
+      <div class="banner banner-danger" role="alert">
+        {{ error() }}
+        <button type="button" class="btn btn-ghost sc__retry" (click)="load()">Reintentar</button>
+      </div>
+    } @else if (members().length === 0) {
+      <p class="sc__muted">Todavía no hay socios cargados.</p>
+    } @else {
+      <ul class="sc__items">
+        @for (m of members(); track m.id) {
+          <li class="sc__item" [class.sc__item--active]="selectedId() === m.id" [class.sc__item--blocked]="m.isBlocked">
+            <button type="button" class="sc__item-main" (click)="selectMember(m)">
+              <span class="sc__item-name">{{ m.name }}</span>
+              <span class="sc__item-detail">
+                {{ m.phone || 'sin teléfono' }} · Cuota ${{ m.membershipFee }}
+                @if (m.discountPercent > 0) { <span> ({{ m.discountPercent }}% desc.)</span> }
+              </span>
+            </button>
+            <div class="sc__item-status">
+              @if (m.isBlocked) {
+                <span class="sc__badge sc__badge--blocked">Atrasado · debe {{ m.monthsOwed }} cuotas</span>
+              } @else if (m.monthsOwed > 0) {
+                <span class="sc__badge sc__badge--warn">Debe {{ m.monthsOwed }} cuota</span>
+              } @else {
+                <span class="sc__badge sc__badge--ok">Al día</span>
+              }
+            </div>
+            <div class="sc__item-actions">
+              <button type="button" class="btn btn-accent" (click)="openPaymentForm(m)">Cobrar cuota</button>
+              @if (isAdmin()) {
+                <button type="button" class="btn btn-ghost" (click)="openEdit(m)">Editar</button>
+                @if (deleteId() === m.id) {
+                  <span class="sc__confirm">
+                    ¿Eliminar?
+                    <button type="button" class="btn btn-danger" [disabled]="deleting()" (click)="confirmDelete()">
+                      {{ deleting() ? 'Eliminando…' : 'Sí' }}
+                    </button>
+                    <button type="button" class="btn btn-ghost" [disabled]="deleting()" (click)="cancelDelete()">No</button>
+                  </span>
+                } @else {
+                  <button type="button" class="btn btn-danger" (click)="askDelete(m.id)">Eliminar</button>
+                }
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  @if (selectedMember(); as m) {
+    <section class="card sc__detail">
+      <div class="sc__detail-header">
+        <h2>Historial de {{ m.name }}</h2>
+        <button type="button" class="btn btn-ghost" (click)="closeDetail()">Cerrar</button>
+      </div>
+
+      @if (loadingPayments()) {
+        <p class="sc__muted">Cargando pagos…</p>
+      } @else if (errorPayments()) {
+        <div class="banner banner-danger" role="alert">
+          {{ errorPayments() }}
+          <button type="button" class="btn btn-ghost sc__retry" (click)="loadPayments()">Reintentar</button>
+        </div>
+      } @else if (payments().length === 0) {
+        <p class="sc__muted">Todavía no se le registraron pagos.</p>
+      } @else {
+        <ul class="sc__items">
+          @for (p of payments(); track p.id) {
+            <li class="sc__item">
+              <div class="sc__item-main sc__item-main--static">
+                <span class="sc__item-name">{{ monthLabel(p.month) }} {{ p.year }}</span>
+                <span class="sc__item-detail">${{ p.amount }} · {{ p.paymentMethod }}</span>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  }
+</div>
+
+<!-- Modal: alta/edición de socio -->
+@if (showForm()) {
+  <div class="sc__overlay" (click)="closeForm()">
+    <div class="sc__modal card" (click)="$event.stopPropagation()">
+      <h2>{{ editingId() ? 'Editar socio' : 'Nuevo socio' }}</h2>
+
+      @if (fError()) {
+        <div class="banner banner-danger" role="alert">{{ fError() }}</div>
+      }
+
+      <div class="field">
+        <label for="sc-name">Nombre</label>
+        <input id="sc-name" type="text" [ngModel]="fName()" (ngModelChange)="fName.set($event)" />
+      </div>
+      <div class="field">
+        <label for="sc-phone">Teléfono</label>
+        <input id="sc-phone" type="text" [ngModel]="fPhone()" (ngModelChange)="fPhone.set($event)" />
+      </div>
+      <div class="field">
+        <label for="sc-fee">Cuota mensual</label>
+        <input id="sc-fee" type="number" min="0" step="0.01" [ngModel]="fFee()" (ngModelChange)="fFee.set($event)" />
+      </div>
+      <div class="field">
+        <label for="sc-discount">Descuento (%)</label>
+        <input id="sc-discount" type="number" min="0" max="100" step="1" [ngModel]="fDiscount()" (ngModelChange)="fDiscount.set($event)" />
+      </div>
+
+      <div class="sc__modal-actions">
+        <button type="button" class="btn btn-ghost" [disabled]="fSubmitting()" (click)="closeForm()">Cancelar</button>
+        <button type="button" class="btn btn-primary" [disabled]="fSubmitting()" (click)="submitForm()">
+          {{ fSubmitting() ? 'Guardando…' : 'Guardar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal: cobrar cuota -->
+@if (showPaymentForm()) {
+  <div class="sc__overlay" (click)="closePaymentForm()">
+    <div class="sc__modal card" (click)="$event.stopPropagation()">
+      <h2>Cobrar cuota</h2>
+
+      @if (pError()) {
+        <div class="banner banner-danger" role="alert">{{ pError() }}</div>
+      }
+
+      <div class="field">
+        <label for="sc-month">Mes</label>
+        <select id="sc-month" [ngModel]="pMonth()" (ngModelChange)="pMonth.set($event)">
+          @for (name of monthNames; track $index) {
+            <option [value]="$index + 1">{{ name }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <label for="sc-year">Año</label>
+        <input id="sc-year" type="number" [ngModel]="pYear()" (ngModelChange)="pYear.set($event)" />
+      </div>
+      <div class="field">
+        <label for="sc-amount">Monto</label>
+        <input id="sc-amount" type="number" min="0" step="0.01" [ngModel]="pAmount()" (ngModelChange)="pAmount.set($event)" />
+      </div>
+      <div class="field">
+        <label for="sc-method">Medio de pago</label>
+        <select id="sc-method" [ngModel]="pMethod()" (ngModelChange)="pMethod.set($event)">
+          @for (m of methods; track m.value) {
+            <option [value]="m.value">{{ m.label }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="sc__modal-actions">
+        <button type="button" class="btn btn-ghost" [disabled]="pSubmitting()" (click)="closePaymentForm()">Cancelar</button>
+        <button type="button" class="btn btn-primary" [disabled]="pSubmitting()" (click)="submitPayment()">
+          {{ pSubmitting() ? 'Guardando…' : 'Cobrar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

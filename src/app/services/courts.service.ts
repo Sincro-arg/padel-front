@@ -7,6 +7,10 @@ export interface Court {
   name: string;
 }
 
+export interface CourtInput {
+  name: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CourtsService {
   private readonly http = inject(HttpClient);
@@ -14,5 +18,17 @@ export class CourtsService {
 
   getCourts() {
     return this.http.get<Court[]>(this.base);
+  }
+
+  createCourt(body: CourtInput) {
+    return this.http.post<Court>(this.base, body);
+  }
+
+  updateCourt(id: string, body: CourtInput) {
+    return this.http.put<Court>(`${this.base}/${id}`, body);
+  }
+
+  deleteCourt(id: string) {
+    return this.http.delete<void>(`${this.base}/${id}`);
   }
 }
