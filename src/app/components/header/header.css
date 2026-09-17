@@ -32,6 +32,22 @@
   flex-shrink: 0;
 }
 
+.hd__nav {
+  display: flex;
+  align-items: center;
+  gap: .25rem;
+}
+.hd__nav-link {
+  color: #fff;
+  opacity: .85;
+  font-size: .85rem;
+  font-weight: 600;
+  padding: .4rem .7rem;
+  border-radius: var(--radius-sm);
+}
+.hd__nav-link:hover { opacity: 1; text-decoration: none; background: rgba(255,255,255,.15); }
+.hd__nav-link--active { opacity: 1; background: rgba(255,255,255,.22); }
+
 .hd__clock {
   display: none;
   flex-direction: column;

@@ -1,0 +1,133 @@
+<div class="container cj">
+  <h1>Caja</h1>
+
+  @if (successMessage()) {
+    <div class="banner banner-success" role="status">{{ successMessage() }}</div>
+  }
+
+  @if (isAdmin()) {
+    <section class="card cj__summary">
+      <h2>Resumen de hoy</h2>
+
+      @if (loadingSummary()) {
+        <p class="cj__muted">Cargando resumen…</p>
+      } @else if (errorSummary()) {
+        <div class="banner banner-danger" role="alert">
+          {{ errorSummary() }}
+          <button type="button" class="btn btn-ghost cj__retry" (click)="loadSummary()">Reintentar</button>
+        </div>
+      } @else if (summary(); as s) {
+        <div class="cj__summary-grid">
+          <div class="cj__summary-item">
+            <span class="cj__summary-label">Efectivo</span>
+            <span class="cj__summary-value">${{ s.cash }}</span>
+          </div>
+          <div class="cj__summary-item">
+            <span class="cj__summary-label">Transferencia</span>
+            <span class="cj__summary-value">${{ s.transfer }}</span>
+          </div>
+          <div class="cj__summary-item">
+            <span class="cj__summary-label">Tarjeta</span>
+            <span class="cj__summary-value">${{ s.card }}</span>
+          </div>
+          <div class="cj__summary-item cj__summary-item--total">
+            <span class="cj__summary-label">Total del día</span>
+            <span class="cj__summary-value">${{ s.total }}</span>
+          </div>
+          <div class="cj__summary-item cj__summary-item--debt">
+            <span class="cj__summary-label">Deuda pendiente</span>
+            <span class="cj__summary-value">${{ s.debtTotal }}</span>
+          </div>
+        </div>
+      }
+    </section>
+  }
+
+  <section class="card cj__debts">
+    <h2>Deudas pendientes</h2>
+
+    @if (loadingDebts()) {
+      <p class="cj__muted">Cargando deudas…</p>
+    } @else if (errorDebts()) {
+      <div class="banner banner-danger" role="alert">
+        {{ errorDebts() }}
+        <button type="button" class="btn btn-ghost cj__retry" (click)="loadDebts()">Reintentar</button>
+      </div>
+    } @else if (debts().length === 0) {
+      <p class="cj__muted">No hay deudas pendientes.</p>
+    } @else {
+      <ul class="cj__list">
+        @for (debt of debts(); track debt.bookingId) {
+          <li class="cj__row">
+            <div class="cj__row-info">
+              <span class="cj__row-name">{{ debt.customerName }}</span>
+              <span class="cj__row-detail">{{ debt.date }} · {{ debt.startHour }}:00</span>
+            </div>
+            <span class="cj__row-amount">${{ debt.amountDue }}</span>
+            <button type="button" class="btn btn-primary" (click)="openPay(debt)">Cobrar</button>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  @if (selectedDebt(); as debt) {
+    <div class="cj__overlay" (click)="closeModal()">
+      <div class="cj__modal card" (click)="$event.stopPropagation()">
+        @if (!confirming()) {
+          <h2>Cobrar a {{ debt.customerName }}</h2>
+          <p class="cj__muted">{{ debt.date }} · {{ debt.startHour }}:00 · Deuda: ${{ debt.amountDue }}</p>
+
+          @if (payError()) {
+            <div class="banner banner-danger" role="alert">{{ payError() }}</div>
+          }
+
+          <div class="field">
+            <label for="cj-amount">Monto</label>
+            <input
+              id="cj-amount"
+              type="number"
+              min="0"
+              step="0.01"
+              [ngModel]="payAmount()"
+              (ngModelChange)="payAmount.set($event)"
+            />
+          </div>
+
+          <div class="field">
+            <label for="cj-method">Medio de pago</label>
+            <select id="cj-method" [ngModel]="payMethod()" (ngModelChange)="payMethod.set($event)">
+              @for (m of methods; track m.value) {
+                <option [value]="m.value">{{ m.label }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="cj__modal-actions">
+            <button type="button" class="btn btn-ghost" (click)="closeModal()">Cancelar</button>
+            <button type="button" class="btn btn-primary" (click)="askConfirm()">Registrar pago</button>
+          </div>
+        } @else {
+          <h2>Confirmar cobro</h2>
+          <p>
+            Vas a registrar <strong>${{ payAmount() }}</strong> en
+            <strong>{{ payMethod() }}</strong> para <strong>{{ debt.customerName }}</strong>.
+          </p>
+
+          @if (payError()) {
+            <div class="banner banner-danger" role="alert">{{ payError() }}</div>
+          }
+
+          <div class="cj__modal-actions">
+            <button type="button" class="btn btn-ghost" [disabled]="paySubmitting()" (click)="backToEdit()">
+              Volver
+            </button>
+            <button type="button" class="btn btn-primary" [disabled]="paySubmitting()" (click)="confirmPay()">
+              {{ paySubmitting() ? 'Registrando…' : 'Confirmar' }}
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

@@ -123,6 +123,7 @@ a:hover { text-decoration: underline; }
 }
 .banner-danger  { background: var(--color-danger-light);  color: var(--color-danger);  border-color: color-mix(in srgb, var(--color-danger) 30%, transparent); }
 .banner-warning { background: var(--color-warning-light); color: var(--color-warning); border-color: color-mix(in srgb, var(--color-warning) 30%, transparent); }
+.banner-success { background: var(--color-primary-light); color: var(--color-primary-dark); border-color: color-mix(in srgb, var(--color-primary) 30%, transparent); }
 
 /* ══════════════════════════════════════════════════════════════════════
    Formularios — reset de todo lo "nativo" del navegador
