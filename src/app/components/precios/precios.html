@@ -1,0 +1,136 @@
+<div class="container pr">
+  <h1>Precios</h1>
+
+  @if (successMessage()) {
+    <div class="banner banner-success" role="status">{{ successMessage() }}</div>
+  }
+
+  <section class="card pr__list">
+    <div class="pr__list-header">
+      <h2>Franjas horarias y tarifas</h2>
+      <button type="button" class="btn btn-primary" (click)="openNew()">+ Nueva franja</button>
+    </div>
+
+    @if (loading()) {
+      <p class="pr__muted">Cargando precios…</p>
+    } @else if (error()) {
+      <div class="banner banner-danger" role="alert">
+        {{ error() }}
+        <button type="button" class="btn btn-ghost pr__retry" (click)="load()">Reintentar</button>
+      </div>
+    } @else if (rules().length === 0) {
+      <p class="pr__muted">Todavía no hay precios cargados.</p>
+    } @else {
+      <div class="pr__groups">
+        <div class="pr__group">
+          <h3 class="pr__group-title">Días de semana</h3>
+          @if (weekdayRules().length === 0) {
+            <p class="pr__muted">Sin franjas cargadas.</p>
+          } @else {
+            <ul class="pr__items">
+              @for (r of weekdayRules(); track r.id) {
+                <li class="pr__item">
+                  <span class="pr__item-hours">{{ r.startHour }}:00 – {{ r.endHour }}:00</span>
+                  <span class="pr__item-price">${{ r.pricePerHour }} / hora</span>
+                  <div class="pr__item-actions">
+                    <button type="button" class="btn btn-ghost" (click)="openEdit(r)">Editar</button>
+                    @if (deleteId() === r.id) {
+                      <span class="pr__confirm">
+                        ¿Eliminar?
+                        <button type="button" class="btn btn-danger" [disabled]="deleting()" (click)="confirmDelete()">
+                          {{ deleting() ? 'Eliminando…' : 'Sí' }}
+                        </button>
+                        <button type="button" class="btn btn-ghost" [disabled]="deleting()" (click)="cancelDelete()">No</button>
+                      </span>
+                    } @else {
+                      <button type="button" class="btn btn-danger" (click)="askDelete(r.id)">Eliminar</button>
+                    }
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+
+        <div class="pr__group">
+          <h3 class="pr__group-title">Fin de semana</h3>
+          @if (weekendRules().length === 0) {
+            <p class="pr__muted">Sin franjas cargadas.</p>
+          } @else {
+            <ul class="pr__items">
+              @for (r of weekendRules(); track r.id) {
+                <li class="pr__item">
+                  <span class="pr__item-hours">{{ r.startHour }}:00 – {{ r.endHour }}:00</span>
+                  <span class="pr__item-price">${{ r.pricePerHour }} / hora</span>
+                  <div class="pr__item-actions">
+                    <button type="button" class="btn btn-ghost" (click)="openEdit(r)">Editar</button>
+                    @if (deleteId() === r.id) {
+                      <span class="pr__confirm">
+                        ¿Eliminar?
+                        <button type="button" class="btn btn-danger" [disabled]="deleting()" (click)="confirmDelete()">
+                          {{ deleting() ? 'Eliminando…' : 'Sí' }}
+                        </button>
+                        <button type="button" class="btn btn-ghost" [disabled]="deleting()" (click)="cancelDelete()">No</button>
+                      </span>
+                    } @else {
+                      <button type="button" class="btn btn-danger" (click)="askDelete(r.id)">Eliminar</button>
+                    }
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      </div>
+    }
+  </section>
+</div>
+
+<!-- Modal: alta/edición de franja de precio -->
+@if (showForm()) {
+  <div class="pr__overlay" (click)="closeForm()">
+    <div class="pr__modal card" (click)="$event.stopPropagation()">
+      <h2>{{ editingId() ? 'Editar franja' : 'Nueva franja' }}</h2>
+
+      @if (fError()) {
+        <div class="banner banner-danger" role="alert">{{ fError() }}</div>
+      }
+
+      <div class="field">
+        <label for="pr-daytype">Tipo de día</label>
+        <select id="pr-daytype" [ngModel]="fDayType()" (ngModelChange)="fDayType.set($event)">
+          @for (d of dayTypes; track d.value) {
+            <option [value]="d.value">{{ d.label }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <label for="pr-start">Hora de inicio</label>
+        <select id="pr-start" [ngModel]="fStartHour()" (ngModelChange)="fStartHour.set($event)">
+          @for (h of hours; track h) {
+            <option [value]="h">{{ h }}:00</option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <label for="pr-end">Hora de fin</label>
+        <select id="pr-end" [ngModel]="fEndHour()" (ngModelChange)="fEndHour.set($event)">
+          @for (h of hours; track h) {
+            <option [value]="h">{{ h }}:00</option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <label for="pr-price">Precio por hora</label>
+        <input id="pr-price" type="number" min="0" step="0.01" [ngModel]="fPricePerHour()" (ngModelChange)="fPricePerHour.set($event)" />
+      </div>
+
+      <div class="pr__modal-actions">
+        <button type="button" class="btn btn-ghost" [disabled]="fSubmitting()" (click)="closeForm()">Cancelar</button>
+        <button type="button" class="btn btn-primary" [disabled]="fSubmitting()" (click)="submitForm()">
+          {{ fSubmitting() ? 'Guardando…' : 'Guardar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

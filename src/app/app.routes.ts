@@ -38,6 +38,11 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard('admin')],
   },
   {
+    path: 'precios',
+    loadComponent: () => import('./components/precios/precios').then(m => m.Precios),
+    canActivate: [authGuard, roleGuard('admin')],
+  },
+  {
     path: 'torneos',
     loadComponent: () => import('./components/tournaments/tournaments').then(m => m.Tournaments),
     canActivate: [authGuard, roleGuard('admin')],
