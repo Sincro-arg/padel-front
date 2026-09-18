@@ -65,4 +65,12 @@ export class MembersService {
   createPayment(memberId: string, body: MemberPaymentInput) {
     return this.http.post<MemberPayment>(`${this.base}/${memberId}/payments`, body);
   }
+
+  updatePayment(memberId: string, paymentId: string, body: MemberPaymentInput) {
+    return this.http.put<MemberPayment>(`${this.base}/${memberId}/payments/${paymentId}`, body);
+  }
+
+  deletePayment(memberId: string, paymentId: string) {
+    return this.http.delete<void>(`${this.base}/${memberId}/payments/${paymentId}`);
+  }
 }
