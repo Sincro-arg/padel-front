@@ -77,6 +77,43 @@
       </table>
     </div>
   }
+
+  <section class="card rsv__fixed">
+    <h2>Turnos fijos</h2>
+
+    @if (recurringError()) {
+      <div class="banner banner-danger" role="alert">
+        {{ recurringError() }}
+        <button type="button" class="btn btn-ghost rsv__retry" (click)="loadRecurring()">Reintentar</button>
+      </div>
+    } @else if (recurringBookings().length === 0) {
+      <p class="rsv__muted">Todavía no hay turnos fijos cargados.</p>
+    } @else {
+      <ul class="rsv__fixed-items">
+        @for (r of recurringBookings(); track r.id) {
+          <li class="rsv__fixed-item">
+            <div class="rsv__fixed-info">
+              <span class="rsv__fixed-name">{{ r.customerName }}</span>
+              <span class="rsv__muted">
+                {{ courtName(r.courtId) }} · {{ weekdayLabel(r.weekday) }} · {{ r.startHour }}-{{ r.endHour }}hs
+              </span>
+            </div>
+            @if (recurringDeleteId() === r.id) {
+              <span class="rsv__fixed-confirm">
+                ¿Eliminar?
+                <button type="button" class="btn btn-danger" [disabled]="recurringDeleting()" (click)="confirmDeleteRecurring()">
+                  {{ recurringDeleting() ? 'Eliminando…' : 'Sí' }}
+                </button>
+                <button type="button" class="btn btn-ghost" [disabled]="recurringDeleting()" (click)="cancelDeleteRecurring()">No</button>
+              </span>
+            } @else {
+              <button type="button" class="btn btn-danger" (click)="askDeleteRecurring(r.id)">Eliminar</button>
+            }
+          </li>
+        }
+      </ul>
+    }
+  </section>
 </div>
 
 <!-- Modal: alta/edición de reserva -->
