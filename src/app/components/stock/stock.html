@@ -65,6 +65,43 @@
       </ul>
     }
   </section>
+
+  <section class="card st__list">
+    <div class="st__list-header">
+      <h2>Ventas de hoy</h2>
+    </div>
+
+    @if (loadingSales()) {
+      <p class="st__muted">Cargando ventas…</p>
+    } @else if (salesToday().length === 0) {
+      <p class="st__muted">Todavía no hay ventas registradas hoy.</p>
+    } @else {
+      <ul class="st__items">
+        @for (s of salesToday(); track s.id) {
+          <li class="st__item">
+            <div class="st__item-main">
+              <span class="st__item-name">{{ s.productName }}</span>
+              <span class="st__item-detail">x{{ s.quantity }} · ${{ s.amount }} · {{ s.paymentMethod }}</span>
+            </div>
+            <div class="st__item-actions">
+              <button type="button" class="btn btn-ghost" (click)="openEditSale(s)">Editar</button>
+              @if (deleteSaleId() === s.id) {
+                <span class="st__confirm">
+                  ¿Eliminar?
+                  <button type="button" class="btn btn-danger" [disabled]="deletingSale()" (click)="confirmDeleteSale()">
+                    {{ deletingSale() ? 'Eliminando…' : 'Sí' }}
+                  </button>
+                  <button type="button" class="btn btn-ghost" [disabled]="deletingSale()" (click)="cancelDeleteSale()">No</button>
+                </span>
+              } @else {
+                <button type="button" class="btn btn-danger" (click)="askDeleteSale(s.id)">Eliminar</button>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </section>
 </div>
 
 <!-- Modal: alta/edición de producto -->
@@ -151,6 +188,39 @@
         <button type="button" class="btn btn-ghost" [disabled]="sSubmitting()" (click)="closeSell()">Cancelar</button>
         <button type="button" class="btn btn-primary" [disabled]="sSubmitting()" (click)="submitSell()">
           {{ sSubmitting() ? 'Vendiendo…' : 'Vender' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal: corregir una venta cargada por error -->
+@if (editingSale(); as sale) {
+  <div class="st__overlay" (click)="closeEditSale()">
+    <div class="st__modal card" (click)="$event.stopPropagation()">
+      <h2>Corregir venta de {{ sale.productName }}</h2>
+
+      @if (esError()) {
+        <div class="banner banner-danger" role="alert">{{ esError() }}</div>
+      }
+
+      <div class="field">
+        <label for="st-es-qty">Cantidad</label>
+        <input id="st-es-qty" type="number" min="1" step="1" [ngModel]="esQuantity()" (ngModelChange)="esQuantity.set($event)" />
+      </div>
+      <div class="field">
+        <label for="st-es-method">Medio de pago</label>
+        <select id="st-es-method" [ngModel]="esMethod()" (ngModelChange)="esMethod.set($event)">
+          @for (m of methods; track m.value) {
+            <option [value]="m.value">{{ m.label }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="st__modal-actions">
+        <button type="button" class="btn btn-ghost" [disabled]="esSubmitting()" (click)="closeEditSale()">Cancelar</button>
+        <button type="button" class="btn btn-primary" [disabled]="esSubmitting()" (click)="submitEditSale()">
+          {{ esSubmitting() ? 'Guardando…' : 'Guardar' }}
         </button>
       </div>
     </div>

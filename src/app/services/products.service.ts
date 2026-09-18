@@ -26,6 +26,7 @@ export interface ProductInput {
 export interface ProductSale {
   id: string;
   productId: string;
+  productName: string;
   quantity: number;
   amount: number;
   bookingId: string | null;
@@ -37,6 +38,11 @@ export interface ProductSaleInput {
   productId: string;
   quantity: number;
   bookingId?: string;
+  paymentMethod: PaymentMethod;
+}
+
+export interface ProductSaleUpdateInput {
+  quantity: number;
   paymentMethod: PaymentMethod;
 }
 
@@ -63,5 +69,17 @@ export class ProductsService {
 
   sell(body: ProductSaleInput) {
     return this.http.post<ProductSale>(`${environment.apiUrl}/product-sales`, body);
+  }
+
+  getSales(date: string) {
+    return this.http.get<ProductSale[]>(`${environment.apiUrl}/product-sales`, { params: { date } });
+  }
+
+  updateSale(id: string, body: ProductSaleUpdateInput) {
+    return this.http.put<ProductSale>(`${environment.apiUrl}/product-sales/${id}`, body);
+  }
+
+  deleteSale(id: string) {
+    return this.http.delete<void>(`${environment.apiUrl}/product-sales/${id}`);
   }
 }

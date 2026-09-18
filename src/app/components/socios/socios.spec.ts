@@ -215,4 +215,59 @@ describe('Socios', () => {
     expect(component.showPaymentForm()).toBeFalse();
     expect(component.successMessage()).toBe('Cuota cobrada.');
   });
+
+  it('openEditPayment precarga el formulario con los datos del pago', () => {
+    component.members.set([MEMBER]);
+    component.selectMember(MEMBER);
+    httpMock.expectOne(`${environment.apiUrl}/members/m1/payments`).flush([PAYMENT]);
+
+    component.openEditPayment(PAYMENT);
+
+    expect(component.editingPaymentId()).toBe('p1');
+    expect(component.pMonth()).toBe(9);
+    expect(component.pYear()).toBe(2026);
+    expect(component.pAmount()).toBe(900);
+    expect(component.pMethod()).toBe('efectivo');
+    expect(component.showPaymentForm()).toBeTrue();
+  });
+
+  it('submitPayment con un pago en edición hace PUT y recarga', () => {
+    component.members.set([MEMBER]);
+    component.selectMember(MEMBER);
+    httpMock.expectOne(`${environment.apiUrl}/members/m1/payments`).flush([PAYMENT]);
+
+    component.openEditPayment(PAYMENT);
+    component.pAmount.set(950);
+    component.submitPayment();
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/members/m1/payments/p1`);
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toEqual({ month: 9, year: 2026, amount: 950, paymentMethod: 'efectivo' });
+    req.flush({ ...PAYMENT, amount: 950 });
+
+    httpMock.expectOne(`${environment.apiUrl}/members`).flush([MEMBER]);
+    httpMock.expectOne(`${environment.apiUrl}/members/m1/payments`).flush([{ ...PAYMENT, amount: 950 }]);
+
+    expect(component.showPaymentForm()).toBeFalse();
+    expect(component.successMessage()).toBe('Pago corregido.');
+  });
+
+  it('confirmDeletePayment borra el pago y recarga socios e historial', () => {
+    component.members.set([MEMBER]);
+    component.selectMember(MEMBER);
+    httpMock.expectOne(`${environment.apiUrl}/members/m1/payments`).flush([PAYMENT]);
+
+    component.askDeletePayment('p1');
+    component.confirmDeletePayment();
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/members/m1/payments/p1`);
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null);
+
+    httpMock.expectOne(`${environment.apiUrl}/members`).flush([MEMBER]);
+    httpMock.expectOne(`${environment.apiUrl}/members/m1/payments`).flush([]);
+
+    expect(component.deletePaymentId()).toBeNull();
+    expect(component.successMessage()).toBe('Pago eliminado.');
+  });
 });

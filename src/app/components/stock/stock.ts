@@ -5,6 +5,7 @@ import { Booking, BookingsService } from '../../services/bookings.service';
 import { PaymentMethod } from '../../services/payments.service';
 import {
   Product,
+  ProductSale,
   ProductType,
   ProductsService,
 } from '../../services/products.service';
@@ -83,8 +84,37 @@ export class Stock implements OnInit {
   readonly todayBookings = signal<Booking[]>([]);
   readonly loadingBookings = signal(false);
 
+  // Ventas de hoy (para poder corregir cantidad/medio de pago o borrar una
+  // venta cargada por error)
+  readonly salesToday = signal<ProductSale[]>([]);
+  readonly loadingSales = signal(false);
+
+  readonly editingSale = signal<ProductSale | null>(null);
+  readonly esQuantity = signal(1);
+  readonly esMethod = signal<PaymentMethod>('efectivo');
+  readonly esSubmitting = signal(false);
+  readonly esError = signal('');
+
+  readonly deleteSaleId = signal<string | null>(null);
+  readonly deletingSale = signal(false);
+
   ngOnInit(): void {
     this.load();
+    this.loadSales();
+  }
+
+  loadSales(): void {
+    this.loadingSales.set(true);
+    this.service.getSales(todayIso()).subscribe({
+      next: list => {
+        this.salesToday.set(list);
+        this.loadingSales.set(false);
+      },
+      error: () => {
+        this.salesToday.set([]);
+        this.loadingSales.set(false);
+      },
+    });
   }
 
   private flash(msg: string): void {
@@ -262,11 +292,77 @@ export class Stock implements OnInit {
           this.sellProduct.set(null);
           this.flash('Venta registrada.');
           this.load();
+          this.loadSales();
         },
         error: err => {
           this.sSubmitting.set(false);
           this.sError.set(err?.error?.error ?? 'No se pudo registrar la venta. Probá de nuevo.');
         },
       });
+  }
+
+  // ── Corrección / borrado de una venta ya cargada ────────────────────
+  openEditSale(sale: ProductSale): void {
+    this.editingSale.set(sale);
+    this.esQuantity.set(sale.quantity);
+    this.esMethod.set(sale.paymentMethod);
+    this.esError.set('');
+  }
+
+  closeEditSale(): void {
+    if (this.esSubmitting()) return;
+    this.editingSale.set(null);
+  }
+
+  submitEditSale(): void {
+    const sale = this.editingSale();
+    if (!sale) return;
+    if (this.esQuantity() <= 0) {
+      this.esError.set('La cantidad tiene que ser mayor a 0.');
+      return;
+    }
+
+    this.esSubmitting.set(true);
+    this.esError.set('');
+    this.service.updateSale(sale.id, { quantity: this.esQuantity(), paymentMethod: this.esMethod() }).subscribe({
+      next: () => {
+        this.esSubmitting.set(false);
+        this.editingSale.set(null);
+        this.flash('Venta corregida.');
+        this.load();
+        this.loadSales();
+      },
+      error: err => {
+        this.esSubmitting.set(false);
+        this.esError.set(err?.error?.error ?? 'No se pudo corregir la venta. Probá de nuevo.');
+      },
+    });
+  }
+
+  askDeleteSale(id: string): void {
+    this.deleteSaleId.set(id);
+  }
+
+  cancelDeleteSale(): void {
+    this.deleteSaleId.set(null);
+  }
+
+  confirmDeleteSale(): void {
+    const id = this.deleteSaleId();
+    if (!id || this.deletingSale()) return;
+    this.deletingSale.set(true);
+    this.service.deleteSale(id).subscribe({
+      next: () => {
+        this.deletingSale.set(false);
+        this.deleteSaleId.set(null);
+        this.flash('Venta eliminada.');
+        this.load();
+        this.loadSales();
+      },
+      error: () => {
+        this.deletingSale.set(false);
+        this.deleteSaleId.set(null);
+      },
+    });
   }
 }

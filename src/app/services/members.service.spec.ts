@@ -80,4 +80,18 @@ describe('MembersService', () => {
     expect(req.request.body).toEqual(body);
     req.flush({ id: 'p1', memberId: 'm1', ...body, paidAt: '2026-09-18' });
   });
+
+  it('updatePayment hace PUT a /members/{id}/payments/{paymentId} con el body', () => {
+    const body = { month: 9, year: 2026, amount: 6000, paymentMethod: 'transferencia' as const };
+    service.updatePayment('m1', 'p1', body).subscribe();
+
+    const req = httpMock.expectOne({ url: `${base}/m1/payments/p1`, method: 'PUT' });
+    expect(req.request.body).toEqual(body);
+    req.flush({ id: 'p1', memberId: 'm1', ...body, paidAt: '2026-09-18' });
+  });
+
+  it('deletePayment hace DELETE a /members/{id}/payments/{paymentId}', () => {
+    service.deletePayment('m1', 'p1').subscribe();
+    httpMock.expectOne({ url: `${base}/m1/payments/p1`, method: 'DELETE' }).flush(null);
+  });
 });

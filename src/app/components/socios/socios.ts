@@ -65,14 +65,18 @@ export class Socios implements OnInit {
   readonly deleteId = signal<string | null>(null);
   readonly deleting = signal(false);
 
-  // Registro de pago de cuota
+  // Registro / edición de pago de cuota
   readonly showPaymentForm = signal(false);
+  readonly editingPaymentId = signal<string | null>(null);
   readonly pMonth = signal(new Date().getMonth() + 1);
   readonly pYear = signal(new Date().getFullYear());
   readonly pAmount = signal(0);
   readonly pMethod = signal<PaymentMethod>('efectivo');
   readonly pSubmitting = signal(false);
   readonly pError = signal('');
+
+  readonly deletePaymentId = signal<string | null>(null);
+  readonly deletingPayment = signal(false);
 
   ngOnInit(): void {
     this.load();
@@ -223,14 +227,25 @@ export class Socios implements OnInit {
     });
   }
 
-  // ── Registro de pago de cuota ────────────────────────────────────────
+  // ── Registro / edición de pago de cuota ──────────────────────────────
   openPaymentForm(m: Member): void {
     this.selectedId.set(m.id);
     if (this.payments().length === 0) this.loadPayments();
+    this.editingPaymentId.set(null);
     this.pMonth.set(new Date().getMonth() + 1);
     this.pYear.set(new Date().getFullYear());
     this.pAmount.set(Math.round(m.membershipFee * (1 - m.discountPercent / 100) * 100) / 100);
     this.pMethod.set('efectivo');
+    this.pError.set('');
+    this.showPaymentForm.set(true);
+  }
+
+  openEditPayment(p: MemberPayment): void {
+    this.editingPaymentId.set(p.id);
+    this.pMonth.set(p.month);
+    this.pYear.set(p.year);
+    this.pAmount.set(p.amount);
+    this.pMethod.set(p.paymentMethod);
     this.pError.set('');
     this.showPaymentForm.set(true);
   }
@@ -252,27 +267,57 @@ export class Socios implements OnInit {
       return;
     }
 
+    const body = {
+      month: this.pMonth(),
+      year: this.pYear(),
+      amount: this.pAmount(),
+      paymentMethod: this.pMethod(),
+    };
+    const editingId = this.editingPaymentId();
+
     this.pSubmitting.set(true);
     this.pError.set('');
-    this.service
-      .createPayment(id, {
-        month: this.pMonth(),
-        year: this.pYear(),
-        amount: this.pAmount(),
-        paymentMethod: this.pMethod(),
-      })
-      .subscribe({
-        next: () => {
-          this.pSubmitting.set(false);
-          this.showPaymentForm.set(false);
-          this.flash('Cuota cobrada.');
-          this.load();
-          this.loadPayments();
-        },
-        error: err => {
-          this.pSubmitting.set(false);
-          this.pError.set(err?.error?.error ?? 'No se pudo registrar el pago. Probá de nuevo.');
-        },
-      });
+    const req = editingId ? this.service.updatePayment(id, editingId, body) : this.service.createPayment(id, body);
+    req.subscribe({
+      next: () => {
+        this.pSubmitting.set(false);
+        this.showPaymentForm.set(false);
+        this.flash(editingId ? 'Pago corregido.' : 'Cuota cobrada.');
+        this.load();
+        this.loadPayments();
+      },
+      error: err => {
+        this.pSubmitting.set(false);
+        this.pError.set(err?.error?.error ?? 'No se pudo registrar el pago. Probá de nuevo.');
+      },
+    });
+  }
+
+  askDeletePayment(id: string): void {
+    this.deletePaymentId.set(id);
+  }
+
+  cancelDeletePayment(): void {
+    this.deletePaymentId.set(null);
+  }
+
+  confirmDeletePayment(): void {
+    const memberId = this.selectedId();
+    const paymentId = this.deletePaymentId();
+    if (!memberId || !paymentId || this.deletingPayment()) return;
+    this.deletingPayment.set(true);
+    this.service.deletePayment(memberId, paymentId).subscribe({
+      next: () => {
+        this.deletingPayment.set(false);
+        this.deletePaymentId.set(null);
+        this.flash('Pago eliminado.');
+        this.load();
+        this.loadPayments();
+      },
+      error: () => {
+        this.deletingPayment.set(false);
+        this.deletePaymentId.set(null);
+      },
+    });
   }
 }

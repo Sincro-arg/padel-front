@@ -89,6 +89,20 @@
                 <span class="sc__item-name">{{ monthLabel(p.month) }} {{ p.year }}</span>
                 <span class="sc__item-detail">${{ p.amount }} · {{ p.paymentMethod }}</span>
               </div>
+              <div class="sc__item-actions">
+                <button type="button" class="btn btn-ghost" (click)="openEditPayment(p)">Editar</button>
+                @if (deletePaymentId() === p.id) {
+                  <span class="sc__confirm">
+                    ¿Eliminar?
+                    <button type="button" class="btn btn-danger" [disabled]="deletingPayment()" (click)="confirmDeletePayment()">
+                      {{ deletingPayment() ? 'Eliminando…' : 'Sí' }}
+                    </button>
+                    <button type="button" class="btn btn-ghost" [disabled]="deletingPayment()" (click)="cancelDeletePayment()">No</button>
+                  </span>
+                } @else {
+                  <button type="button" class="btn btn-danger" (click)="askDeletePayment(p.id)">Eliminar</button>
+                }
+              </div>
             </li>
           }
         </ul>
@@ -138,7 +152,7 @@
 @if (showPaymentForm()) {
   <div class="sc__overlay" (click)="closePaymentForm()">
     <div class="sc__modal card" (click)="$event.stopPropagation()">
-      <h2>Cobrar cuota</h2>
+      <h2>{{ editingPaymentId() ? 'Corregir pago' : 'Cobrar cuota' }}</h2>
 
       @if (pError()) {
         <div class="banner banner-danger" role="alert">{{ pError() }}</div>
@@ -172,7 +186,7 @@
       <div class="sc__modal-actions">
         <button type="button" class="btn btn-ghost" [disabled]="pSubmitting()" (click)="closePaymentForm()">Cancelar</button>
         <button type="button" class="btn btn-primary" [disabled]="pSubmitting()" (click)="submitPayment()">
-          {{ pSubmitting() ? 'Guardando…' : 'Cobrar' }}
+          {{ pSubmitting() ? 'Guardando…' : (editingPaymentId() ? 'Corregir' : 'Cobrar') }}
         </button>
       </div>
     </div>
