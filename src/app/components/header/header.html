@@ -17,6 +17,18 @@
         <a routerLink="/reportes" routerLinkActive="hd__nav-link--active" class="hd__nav-link">Reportes</a>
       }
     </nav>
+
+    <button
+      type="button"
+      class="hd__hamburger"
+      [class.is-open]="menuOpen()"
+      (click)="toggleMenu()"
+      aria-label="Abrir menú de navegación"
+    >
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
   }
 
   <div class="hd__clock">
@@ -40,3 +52,33 @@
     </div>
   }
 </header>
+
+@if (user() && menuOpen()) {
+  <div class="hd__overlay" (click)="closeMenu()" aria-hidden="true"></div>
+}
+
+@if (user()) {
+  <aside class="hd__drawer" [class.is-open]="menuOpen()" aria-label="Menú de navegación">
+    <div class="hd__drawer-head">
+      <span class="hd__drawer-title">Menú</span>
+      <button type="button" class="hd__drawer-close" (click)="closeMenu()" aria-label="Cerrar menú">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+    </div>
+    <nav class="hd__drawer-nav">
+      <a routerLink="/reservas" routerLinkActive="hd__drawer-link--active" class="hd__drawer-link" (click)="closeMenu()">Reservas</a>
+      <a routerLink="/caja" routerLinkActive="hd__drawer-link--active" class="hd__drawer-link" (click)="closeMenu()">Caja</a>
+      <a routerLink="/socios" routerLinkActive="hd__drawer-link--active" class="hd__drawer-link" (click)="closeMenu()">Socios</a>
+      <a routerLink="/stock" routerLinkActive="hd__drawer-link--active" class="hd__drawer-link" (click)="closeMenu()">Stock</a>
+      @if (isAdmin()) {
+        <a routerLink="/canchas" routerLinkActive="hd__drawer-link--active" class="hd__drawer-link" (click)="closeMenu()">Canchas</a>
+        <a routerLink="/precios" routerLinkActive="hd__drawer-link--active" class="hd__drawer-link" (click)="closeMenu()">Precios</a>
+        <a routerLink="/torneos" routerLinkActive="hd__drawer-link--active" class="hd__drawer-link" (click)="closeMenu()">Torneos</a>
+        <a routerLink="/reportes" routerLinkActive="hd__drawer-link--active" class="hd__drawer-link" (click)="closeMenu()">Reportes</a>
+      }
+    </nav>
+  </aside>
+}

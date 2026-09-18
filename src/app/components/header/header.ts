@@ -23,6 +23,8 @@ export class Header implements OnInit {
   readonly roleLabel = computed(() => ROLE_LABEL[this.user()?.role ?? ''] ?? '');
   readonly isAdmin = computed(() => this.user()?.role === 'admin');
 
+  readonly menuOpen = signal(false);
+
   readonly now = signal(new Date());
 
   readonly date = computed(() =>
@@ -39,5 +41,13 @@ export class Header implements OnInit {
 
   logout(): void {
     this.auth.logout();
+  }
+
+  toggleMenu(): void {
+    this.menuOpen.update((open) => !open);
+  }
+
+  closeMenu(): void {
+    this.menuOpen.set(false);
   }
 }
