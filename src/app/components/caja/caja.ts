@@ -1,7 +1,14 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
-import { Debt, PaymentMethod, PaymentsService, PaymentsSummary } from '../../services/payments.service';
+import { Booking, BookingsService } from '../../services/bookings.service';
+import {
+  BookingPaymentRecord,
+  Debt,
+  PaymentMethod,
+  PaymentsService,
+  PaymentsSummary,
+} from '../../services/payments.service';
 
 const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
   { value: 'efectivo', label: 'Efectivo' },
@@ -31,6 +38,7 @@ function todayIso(): string {
 })
 export class Caja implements OnInit {
   private readonly payments = inject(PaymentsService);
+  private readonly bookings = inject(BookingsService);
   private readonly auth = inject(AuthService);
 
   readonly isAdmin = computed(() => this.auth.isAdmin());
@@ -54,8 +62,32 @@ export class Caja implements OnInit {
   readonly paySubmitting = signal(false);
   readonly payError = signal('');
 
+  // Reservas cobradas hoy, para poder corregir un pago ya registrado
+  readonly todayBookings = signal<Booking[]>([]);
+  readonly loadingBookings = signal(false);
+  readonly errorBookings = signal('');
+  readonly bookingsWithPayments = computed(() => this.todayBookings().filter(b => b.paidAmount > 0));
+
+  readonly expandedBookingId = signal<string | null>(null);
+  readonly bookingPayments = signal<BookingPaymentRecord[]>([]);
+  readonly loadingPayments = signal(false);
+  readonly errorPayments = signal('');
+
+  // Edición de un pago ya registrado
+  readonly editingPayment = signal<BookingPaymentRecord | null>(null);
+  readonly editAmount = signal(0);
+  readonly editMethod = signal<PaymentMethod>('efectivo');
+  readonly editSubmitting = signal(false);
+  readonly editError = signal('');
+
+  // Borrado de un pago ya registrado
+  readonly deletingPaymentId = signal<string | null>(null);
+  readonly deleteSubmitting = signal(false);
+  readonly deleteError = signal('');
+
   ngOnInit(): void {
     this.loadDebts();
+    this.loadTodayBookings();
     if (this.isAdmin()) {
       this.loadSummary();
     }
@@ -146,5 +178,129 @@ export class Caja implements OnInit {
           this.payError.set(err?.error?.error ?? 'No se pudo registrar el pago. Probá de nuevo.');
         },
       });
+  }
+
+  loadTodayBookings(): void {
+    this.loadingBookings.set(true);
+    this.errorBookings.set('');
+    this.bookings.getBookings(todayIso()).subscribe({
+      next: list => {
+        this.todayBookings.set(list);
+        this.loadingBookings.set(false);
+      },
+      error: () => {
+        this.errorBookings.set('No se pudieron cargar las reservas de hoy.');
+        this.loadingBookings.set(false);
+      },
+    });
+  }
+
+  togglePayments(booking: Booking): void {
+    if (this.expandedBookingId() === booking.id) {
+      this.expandedBookingId.set(null);
+      this.bookingPayments.set([]);
+      return;
+    }
+
+    this.expandedBookingId.set(booking.id);
+    this.bookingPayments.set([]);
+    this.loadingPayments.set(true);
+    this.errorPayments.set('');
+
+    this.payments.getBookingPayments(booking.id).subscribe({
+      next: list => {
+        this.bookingPayments.set(list);
+        this.loadingPayments.set(false);
+      },
+      error: () => {
+        this.errorPayments.set('No se pudieron cargar los pagos de esta reserva.');
+        this.loadingPayments.set(false);
+      },
+    });
+  }
+
+  private refreshAfterPaymentChange(bookingId: string): void {
+    this.loadTodayBookings();
+    this.loadDebts();
+    if (this.isAdmin()) this.loadSummary();
+    if (this.expandedBookingId() === bookingId) {
+      this.payments.getBookingPayments(bookingId).subscribe(list => this.bookingPayments.set(list));
+    }
+  }
+
+  openEditPayment(payment: BookingPaymentRecord): void {
+    this.editingPayment.set(payment);
+    this.editAmount.set(payment.amount);
+    this.editMethod.set(payment.paymentMethod);
+    this.editError.set('');
+  }
+
+  closeEditPayment(): void {
+    if (this.editSubmitting()) return;
+    this.editingPayment.set(null);
+    this.editError.set('');
+  }
+
+  confirmEditPayment(): void {
+    const payment = this.editingPayment();
+    if (!payment || this.editSubmitting()) return;
+
+    if (!this.editAmount() || this.editAmount() <= 0) {
+      this.editError.set('El monto tiene que ser mayor a cero.');
+      return;
+    }
+
+    this.editSubmitting.set(true);
+    this.editError.set('');
+
+    this.payments
+      .editBookingPayment(payment.bookingId, payment.id, {
+        amount: this.editAmount(),
+        paymentMethod: this.editMethod(),
+      })
+      .subscribe({
+        next: () => {
+          this.editSubmitting.set(false);
+          this.editingPayment.set(null);
+          this.successMessage.set('Pago corregido.');
+          this.refreshAfterPaymentChange(payment.bookingId);
+          setTimeout(() => this.successMessage.set(''), 4000);
+        },
+        error: err => {
+          this.editSubmitting.set(false);
+          this.editError.set(err?.error?.error ?? 'No se pudo corregir el pago. Probá de nuevo.');
+        },
+      });
+  }
+
+  askDeletePayment(payment: BookingPaymentRecord): void {
+    this.deletingPaymentId.set(payment.id);
+    this.deleteError.set('');
+  }
+
+  cancelDeletePayment(): void {
+    this.deletingPaymentId.set(null);
+    this.deleteError.set('');
+  }
+
+  confirmDeletePayment(payment: BookingPaymentRecord): void {
+    if (this.deleteSubmitting()) return;
+
+    this.deleteSubmitting.set(true);
+    this.deleteError.set('');
+
+    this.payments.deleteBookingPayment(payment.bookingId, payment.id).subscribe({
+      next: () => {
+        this.deleteSubmitting.set(false);
+        this.deletingPaymentId.set(null);
+        this.successMessage.set('Pago borrado.');
+        this.refreshAfterPaymentChange(payment.bookingId);
+        setTimeout(() => this.successMessage.set(''), 4000);
+      },
+      error: err => {
+        this.deleteSubmitting.set(false);
+        this.deleteError.set(err?.error?.error ?? 'No se pudo borrar el pago. Probá de nuevo.');
+      },
+    });
   }
 }

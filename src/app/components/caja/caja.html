@@ -71,6 +71,116 @@
     }
   </section>
 
+  <section class="card cj__debts">
+    <h2>Pagos registrados hoy</h2>
+
+    @if (loadingBookings()) {
+      <p class="cj__muted">Cargando reservas…</p>
+    } @else if (errorBookings()) {
+      <div class="banner banner-danger" role="alert">
+        {{ errorBookings() }}
+        <button type="button" class="btn btn-ghost cj__retry" (click)="loadTodayBookings()">Reintentar</button>
+      </div>
+    } @else if (bookingsWithPayments().length === 0) {
+      <p class="cj__muted">Todavía no se registró ningún pago hoy.</p>
+    } @else {
+      <ul class="cj__list">
+        @for (booking of bookingsWithPayments(); track booking.id) {
+          <li class="cj__row cj__row--column">
+            <div class="cj__row cj__row--nogap">
+              <div class="cj__row-info">
+                <span class="cj__row-name">{{ booking.customerName }}</span>
+                <span class="cj__row-detail">{{ booking.date }} · {{ booking.startHour }}:00 · pagado ${{ booking.paidAmount }} de ${{ booking.totalAmount }}</span>
+              </div>
+              <button type="button" class="btn btn-ghost" (click)="togglePayments(booking)">
+                {{ expandedBookingId() === booking.id ? 'Ocultar pagos' : 'Ver pagos' }}
+              </button>
+            </div>
+
+            @if (expandedBookingId() === booking.id) {
+              <div class="cj__payments">
+                @if (loadingPayments()) {
+                  <p class="cj__muted">Cargando pagos…</p>
+                } @else if (errorPayments()) {
+                  <div class="banner banner-danger" role="alert">{{ errorPayments() }}</div>
+                } @else {
+                  <ul class="cj__list">
+                    @for (payment of bookingPayments(); track payment.id) {
+                      <li class="cj__row">
+                        <div class="cj__row-info">
+                          <span class="cj__row-name">${{ payment.amount }} · {{ payment.paymentMethod }}</span>
+                          <span class="cj__row-detail">{{ payment.createdAt }}</span>
+                        </div>
+
+                        @if (deletingPaymentId() === payment.id) {
+                          <span class="cj__muted">¿Borrar este pago?</span>
+                          @if (deleteError()) {
+                            <div class="banner banner-danger" role="alert">{{ deleteError() }}</div>
+                          }
+                          <button type="button" class="btn btn-ghost" [disabled]="deleteSubmitting()" (click)="cancelDeletePayment()">
+                            No
+                          </button>
+                          <button type="button" class="btn btn-danger" [disabled]="deleteSubmitting()" (click)="confirmDeletePayment(payment)">
+                            {{ deleteSubmitting() ? 'Borrando…' : 'Sí, borrar' }}
+                          </button>
+                        } @else {
+                          <button type="button" class="btn btn-ghost" (click)="openEditPayment(payment)">Editar</button>
+                          <button type="button" class="btn btn-danger" (click)="askDeletePayment(payment)">Borrar</button>
+                        }
+                      </li>
+                    }
+                  </ul>
+                }
+              </div>
+            }
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  @if (editingPayment(); as payment) {
+    <div class="cj__overlay" (click)="closeEditPayment()">
+      <div class="cj__modal card" (click)="$event.stopPropagation()">
+        <h2>Editar pago</h2>
+
+        @if (editError()) {
+          <div class="banner banner-danger" role="alert">{{ editError() }}</div>
+        }
+
+        <div class="field">
+          <label for="cj-edit-amount">Monto</label>
+          <input
+            id="cj-edit-amount"
+            type="number"
+            min="0"
+            step="0.01"
+            [ngModel]="editAmount()"
+            (ngModelChange)="editAmount.set($event)"
+          />
+        </div>
+
+        <div class="field">
+          <label for="cj-edit-method">Medio de pago</label>
+          <select id="cj-edit-method" [ngModel]="editMethod()" (ngModelChange)="editMethod.set($event)">
+            @for (m of methods; track m.value) {
+              <option [value]="m.value">{{ m.label }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="cj__modal-actions">
+          <button type="button" class="btn btn-ghost" [disabled]="editSubmitting()" (click)="closeEditPayment()">
+            Cancelar
+          </button>
+          <button type="button" class="btn btn-primary" [disabled]="editSubmitting()" (click)="confirmEditPayment()">
+            {{ editSubmitting() ? 'Guardando…' : 'Guardar cambios' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
   @if (selectedDebt(); as debt) {
     <div class="cj__overlay" (click)="closeModal()">
       <div class="cj__modal card" (click)="$event.stopPropagation()">

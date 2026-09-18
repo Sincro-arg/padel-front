@@ -28,6 +28,14 @@ export interface BookingPaymentResult {
   totalAmount: number;
 }
 
+export interface BookingPaymentRecord {
+  id: string;
+  bookingId: string;
+  amount: number;
+  paymentMethod: PaymentMethod;
+  createdAt: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PaymentsService {
   private readonly http = inject(HttpClient);
@@ -46,6 +54,29 @@ export class PaymentsService {
     return this.http.post<BookingPaymentResult>(
       `${environment.apiUrl}/bookings/${bookingId}/payments`,
       body,
+    );
+  }
+
+  getBookingPayments(bookingId: string) {
+    return this.http.get<BookingPaymentRecord[]>(
+      `${environment.apiUrl}/bookings/${bookingId}/payments`,
+    );
+  }
+
+  editBookingPayment(
+    bookingId: string,
+    paymentId: string,
+    body: { amount: number; paymentMethod: PaymentMethod },
+  ) {
+    return this.http.put<BookingPaymentResult>(
+      `${environment.apiUrl}/bookings/${bookingId}/payments/${paymentId}`,
+      body,
+    );
+  }
+
+  deleteBookingPayment(bookingId: string, paymentId: string) {
+    return this.http.delete<BookingPaymentResult>(
+      `${environment.apiUrl}/bookings/${bookingId}/payments/${paymentId}`,
     );
   }
 }
