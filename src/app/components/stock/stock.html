@@ -1,0 +1,158 @@
+<div class="container st">
+  <h1>Stock</h1>
+
+  @if (successMessage()) {
+    <div class="banner banner-success" role="status">{{ successMessage() }}</div>
+  }
+
+  @if (lowStockProducts().length > 0) {
+    <div class="banner banner-warning" role="alert">
+      Stock bajo: {{ lowStockProducts().length === 1 ? lowStockProducts()[0].name : (lowStockProducts().length + ' productos') }}
+    </div>
+  }
+
+  <section class="card st__list">
+    <div class="st__list-header">
+      <h2>Productos</h2>
+      @if (isAdmin()) {
+        <button type="button" class="btn btn-primary" (click)="openNew()">+ Nuevo producto</button>
+      }
+    </div>
+
+    @if (loading()) {
+      <p class="st__muted">Cargando productos…</p>
+    } @else if (error()) {
+      <div class="banner banner-danger" role="alert">
+        {{ error() }}
+        <button type="button" class="btn btn-ghost st__retry" (click)="load()">Reintentar</button>
+      </div>
+    } @else if (products().length === 0) {
+      <p class="st__muted">Todavía no hay productos cargados.</p>
+    } @else {
+      <ul class="st__items">
+        @for (p of products(); track p.id) {
+          <li class="st__item" [class.st__item--low]="p.lowStock">
+            <div class="st__item-main">
+              <span class="st__item-name">{{ p.name }}</span>
+              <span class="st__item-detail">{{ typeLabel(p.type) }} · ${{ p.price }}</span>
+            </div>
+            <div class="st__item-status">
+              @if (p.lowStock) {
+                <span class="st__badge st__badge--low">Stock bajo · {{ p.stock }}</span>
+              } @else {
+                <span class="st__badge st__badge--ok">Stock: {{ p.stock }}</span>
+              }
+            </div>
+            <div class="st__item-actions">
+              <button type="button" class="btn btn-accent" [disabled]="p.stock <= 0" (click)="openSell(p)">Vender</button>
+              @if (isAdmin()) {
+                <button type="button" class="btn btn-ghost" (click)="openEdit(p)">Editar</button>
+                @if (deleteId() === p.id) {
+                  <span class="st__confirm">
+                    ¿Eliminar?
+                    <button type="button" class="btn btn-danger" [disabled]="deleting()" (click)="confirmDelete()">
+                      {{ deleting() ? 'Eliminando…' : 'Sí' }}
+                    </button>
+                    <button type="button" class="btn btn-ghost" [disabled]="deleting()" (click)="cancelDelete()">No</button>
+                  </span>
+                } @else {
+                  <button type="button" class="btn btn-danger" (click)="askDelete(p.id)">Eliminar</button>
+                }
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+</div>
+
+<!-- Modal: alta/edición de producto -->
+@if (showForm()) {
+  <div class="st__overlay" (click)="closeForm()">
+    <div class="st__modal card" (click)="$event.stopPropagation()">
+      <h2>{{ editingId() ? 'Editar producto' : 'Nuevo producto' }}</h2>
+
+      @if (fError()) {
+        <div class="banner banner-danger" role="alert">{{ fError() }}</div>
+      }
+
+      <div class="field">
+        <label for="st-name">Nombre</label>
+        <input id="st-name" type="text" [ngModel]="fName()" (ngModelChange)="fName.set($event)" />
+      </div>
+      <div class="field">
+        <label for="st-type">Tipo</label>
+        <select id="st-type" [ngModel]="fType()" (ngModelChange)="fType.set($event)">
+          @for (t of types; track t.value) {
+            <option [value]="t.value">{{ t.label }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <label for="st-stock">Stock actual</label>
+        <input id="st-stock" type="number" min="0" step="1" [ngModel]="fStock()" (ngModelChange)="fStock.set($event)" />
+      </div>
+      <div class="field">
+        <label for="st-minstock">Stock mínimo (aviso)</label>
+        <input id="st-minstock" type="number" min="0" step="1" [ngModel]="fMinStock()" (ngModelChange)="fMinStock.set($event)" />
+      </div>
+      <div class="field">
+        <label for="st-price">Precio</label>
+        <input id="st-price" type="number" min="0" step="0.01" [ngModel]="fPrice()" (ngModelChange)="fPrice.set($event)" />
+      </div>
+
+      <div class="st__modal-actions">
+        <button type="button" class="btn btn-ghost" [disabled]="fSubmitting()" (click)="closeForm()">Cancelar</button>
+        <button type="button" class="btn btn-primary" [disabled]="fSubmitting()" (click)="submitForm()">
+          {{ fSubmitting() ? 'Guardando…' : 'Guardar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal: vender producto -->
+@if (sellProduct(); as p) {
+  <div class="st__overlay" (click)="closeSell()">
+    <div class="st__modal card" (click)="$event.stopPropagation()">
+      <h2>Vender {{ p.name }}</h2>
+
+      @if (sError()) {
+        <div class="banner banner-danger" role="alert">{{ sError() }}</div>
+      }
+
+      <div class="field">
+        <label for="st-qty">Cantidad</label>
+        <input id="st-qty" type="number" min="1" [max]="p.stock" step="1" [ngModel]="sQuantity()" (ngModelChange)="sQuantity.set($event)" />
+      </div>
+      <div class="field">
+        <label for="st-method">Medio de pago</label>
+        <select id="st-method" [ngModel]="sMethod()" (ngModelChange)="sMethod.set($event)">
+          @for (m of methods; track m.value) {
+            <option [value]="m.value">{{ m.label }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <label for="st-booking">Sumar a una reserva de hoy (opcional)</label>
+        <select id="st-booking" [ngModel]="sBookingId()" (ngModelChange)="sBookingId.set($event)">
+          <option value="">Venta suelta (no se suma a ninguna reserva)</option>
+          @if (loadingBookings()) {
+            <option value="" disabled>Cargando reservas…</option>
+          }
+          @for (b of todayBookings(); track b.id) {
+            <option [value]="b.id">{{ bookingLabel(b) }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="st__modal-actions">
+        <button type="button" class="btn btn-ghost" [disabled]="sSubmitting()" (click)="closeSell()">Cancelar</button>
+        <button type="button" class="btn btn-primary" [disabled]="sSubmitting()" (click)="submitSell()">
+          {{ sSubmitting() ? 'Vendiendo…' : 'Vender' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

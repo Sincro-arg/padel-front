@@ -28,6 +28,11 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'stock',
+    loadComponent: () => import('./components/stock/stock').then(m => m.Stock),
+    canActivate: [authGuard],
+  },
+  {
     path: 'canchas',
     loadComponent: () => import('./components/canchas/canchas').then(m => m.Canchas),
     canActivate: [authGuard, roleGuard('admin')],
