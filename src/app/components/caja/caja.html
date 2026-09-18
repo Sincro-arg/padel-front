@@ -71,6 +71,149 @@
     }
   </section>
 
+  <section class="card cj__debts">
+    <h2>Pagos por reserva</h2>
+    <p class="cj__muted">Buscá una reserva para corregir o borrar un pago mal cargado.</p>
+
+    <div class="field">
+      <label for="cj-bookings-date">Fecha</label>
+      <input
+        id="cj-bookings-date"
+        type="date"
+        [ngModel]="bookingsDate()"
+        (ngModelChange)="onBookingsDateChange($event)"
+      />
+    </div>
+
+    @if (loadingBookings()) {
+      <p class="cj__muted">Cargando reservas…</p>
+    } @else if (errorBookings()) {
+      <div class="banner banner-danger" role="alert">
+        {{ errorBookings() }}
+        <button type="button" class="btn btn-ghost cj__retry" (click)="loadBookingsOfDay()">Reintentar</button>
+      </div>
+    } @else if (bookingsOfDay().length === 0) {
+      <p class="cj__muted">No hay reservas en esa fecha.</p>
+    } @else {
+      <ul class="cj__list">
+        @for (booking of bookingsOfDay(); track booking.id) {
+          <li class="cj__row">
+            <div class="cj__row-info">
+              <span class="cj__row-name">{{ booking.customerName }}</span>
+              <span class="cj__row-detail">
+                {{ booking.courtName }} · {{ booking.startHour }}:00–{{ booking.endHour }}:00 ·
+                Pagado ${{ booking.paidAmount }} de ${{ booking.totalAmount }} ({{ booking.paymentStatus }})
+              </span>
+            </div>
+            <button type="button" class="btn btn-ghost" (click)="openBookingPayments(booking)">Ver pagos</button>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  @if (selectedBooking(); as booking) {
+    <div class="cj__overlay" (click)="closeBookingPayments()">
+      <div class="cj__modal cj__modal--wide card" (click)="$event.stopPropagation()">
+        <h2>Pagos de {{ booking.customerName }}</h2>
+        <p class="cj__muted">{{ booking.date }} · {{ booking.startHour }}:00–{{ booking.endHour }}:00</p>
+
+        @if (errorPayments()) {
+          <div class="banner banner-danger" role="alert">{{ errorPayments() }}</div>
+        }
+
+        @if (loadingPayments()) {
+          <p class="cj__muted">Cargando pagos…</p>
+        } @else if (bookingPayments().length === 0) {
+          <p class="cj__muted">Esta reserva no tiene pagos registrados.</p>
+        } @else {
+          <ul class="cj__list">
+            @for (payment of bookingPayments(); track payment.id) {
+              <li class="cj__row">
+                @if (editingPaymentId() === payment.id) {
+                  <div class="field">
+                    <label [for]="'cj-edit-amount-' + payment.id">Monto</label>
+                    <input
+                      [id]="'cj-edit-amount-' + payment.id"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      [ngModel]="editAmount()"
+                      (ngModelChange)="editAmount.set($event)"
+                    />
+                  </div>
+                  <div class="field">
+                    <label [for]="'cj-edit-method-' + payment.id">Medio de pago</label>
+                    <select
+                      [id]="'cj-edit-method-' + payment.id"
+                      [ngModel]="editMethod()"
+                      (ngModelChange)="editMethod.set($event)"
+                    >
+                      @for (m of methods; track m.value) {
+                        <option [value]="m.value">{{ m.label }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="cj__modal-actions">
+                    <button
+                      type="button"
+                      class="btn btn-ghost"
+                      [disabled]="savingPayment()"
+                      (click)="cancelEditPayment()"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-primary"
+                      [disabled]="savingPayment()"
+                      (click)="saveEditPayment()"
+                    >
+                      {{ savingPayment() ? 'Guardando…' : 'Guardar' }}
+                    </button>
+                  </div>
+                } @else if (confirmDeleteId() === payment.id) {
+                  <div class="cj__row-info">
+                    <span>¿Borrar este pago de ${{ payment.amount }} ({{ payment.paymentMethod }})?</span>
+                  </div>
+                  <div class="cj__modal-actions">
+                    <button
+                      type="button"
+                      class="btn btn-ghost"
+                      [disabled]="savingPayment()"
+                      (click)="cancelDeletePayment()"
+                    >
+                      No
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-danger"
+                      [disabled]="savingPayment()"
+                      (click)="confirmDeletePayment()"
+                    >
+                      {{ savingPayment() ? 'Borrando…' : 'Sí, borrar' }}
+                    </button>
+                  </div>
+                } @else {
+                  <div class="cj__row-info">
+                    <span class="cj__row-name">${{ payment.amount }}</span>
+                    <span class="cj__row-detail">{{ payment.paymentMethod }} · {{ payment.createdAt }}</span>
+                  </div>
+                  <button type="button" class="btn btn-ghost" (click)="startEditPayment(payment)">Editar</button>
+                  <button type="button" class="btn btn-danger" (click)="askDeletePayment(payment.id)">Borrar</button>
+                }
+              </li>
+            }
+          </ul>
+        }
+
+        <div class="cj__modal-actions">
+          <button type="button" class="btn btn-ghost" (click)="closeBookingPayments()">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  }
+
   @if (selectedDebt(); as debt) {
     <div class="cj__overlay" (click)="closeModal()">
       <div class="cj__modal card" (click)="$event.stopPropagation()">

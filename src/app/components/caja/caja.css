@@ -80,6 +80,11 @@
   max-width: 380px;
   padding: 1.5rem;
 }
+.cj__modal--wide {
+  max-width: 520px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
 .cj__modal-actions {
   display: flex;
   justify-content: flex-end;
