@@ -26,7 +26,6 @@ export interface ProductInput {
 export interface ProductSale {
   id: string;
   productId: string;
-  productName: string;
   quantity: number;
   amount: number;
   bookingId: string | null;
