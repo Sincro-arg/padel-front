@@ -108,6 +108,56 @@ describe('Canchas', () => {
     expect(component.fSubmitting()).toBeFalse();
   });
 
+  it('el listado se muestra correctamente en pantalla', () => {
+    fixture.detectChanges();
+    httpMock.expectOne(`${environment.apiUrl}/courts`).flush([COURT, { id: 'c2', name: 'Cancha 2' }]);
+    fixture.detectChanges();
+
+    const items = fixture.nativeElement.querySelectorAll('.cn__item-name');
+    expect(items.length).toBe(2);
+    expect(items[0].textContent).toContain('Cancha 1');
+    expect(items[1].textContent).toContain('Cancha 2');
+  });
+
+  it('alta camino feliz: el modal se cierra y se ve el mensaje de éxito', () => {
+    fixture.detectChanges();
+    httpMock.expectOne(`${environment.apiUrl}/courts`).flush([]);
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelector('.cn__list-header .btn-primary').click();
+    fixture.detectChanges();
+
+    const input = fixture.nativeElement.querySelector('#cn-name');
+    input.value = 'Cancha 3';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelector('.cn__modal-actions .btn-primary').click();
+
+    httpMock.expectOne(`${environment.apiUrl}/courts`).flush({ id: 'c3', name: 'Cancha 3' });
+    httpMock.expectOne(`${environment.apiUrl}/courts`).flush([{ id: 'c3', name: 'Cancha 3' }]);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.cn__overlay')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.banner-success').textContent).toContain('Cancha creada.');
+  });
+
+  it('alta con error de validación: el error se ve dentro del modal', () => {
+    fixture.detectChanges();
+    httpMock.expectOne(`${environment.apiUrl}/courts`).flush([]);
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelector('.cn__list-header .btn-primary').click();
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelector('.cn__modal-actions .btn-primary').click();
+    fixture.detectChanges();
+
+    const errorBanner = fixture.nativeElement.querySelector('.cn__modal .banner-danger');
+    expect(errorBanner.textContent).toContain('Completá el nombre.');
+    httpMock.expectNone(`${environment.apiUrl}/courts`);
+  });
+
   it('askDelete / cancelDelete manejan la confirmación', () => {
     component.askDelete('c1');
     expect(component.deleteId()).toBe('c1');

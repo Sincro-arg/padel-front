@@ -152,6 +152,60 @@ describe('Socios', () => {
     expect(component.successMessage()).toBe('Socio actualizado.');
   });
 
+  it('el listado se muestra correctamente en pantalla', () => {
+    fixture.detectChanges();
+    httpMock.expectOne(`${environment.apiUrl}/members`).flush([MEMBER, { ...MEMBER, id: 'm2', name: 'Ana López', monthsOwed: 3, isBlocked: true }]);
+    fixture.detectChanges();
+
+    const items = fixture.nativeElement.querySelectorAll('.sc__item');
+    expect(items.length).toBe(2);
+    expect(items[0].textContent).toContain('Juan Pérez');
+    expect(items[0].textContent).toContain('Al día');
+    expect(items[1].textContent).toContain('Ana López');
+    expect(items[1].textContent).toContain('Atrasado');
+  });
+
+  it('alta camino feliz: el modal se cierra y se ve el mensaje de éxito', () => {
+    auth.currentUser.set(ADMIN);
+    fixture.detectChanges();
+    httpMock.expectOne(`${environment.apiUrl}/members`).flush([]);
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelector('.sc__list-header .btn-primary').click();
+    fixture.detectChanges();
+
+    const name = fixture.nativeElement.querySelector('#sc-name');
+    name.value = 'Juan Pérez';
+    name.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelector('.sc__modal-actions .btn-primary').click();
+
+    httpMock.expectOne(`${environment.apiUrl}/members`).flush(MEMBER);
+    httpMock.expectOne(`${environment.apiUrl}/members`).flush([MEMBER]);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.sc__overlay')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.banner-success').textContent).toContain('Socio creado.');
+  });
+
+  it('alta con error de validación: el error se ve dentro del modal', () => {
+    auth.currentUser.set(ADMIN);
+    fixture.detectChanges();
+    httpMock.expectOne(`${environment.apiUrl}/members`).flush([]);
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelector('.sc__list-header .btn-primary').click();
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelector('.sc__modal-actions .btn-primary').click();
+    fixture.detectChanges();
+
+    const errorBanner = fixture.nativeElement.querySelector('.sc__modal .banner-danger');
+    expect(errorBanner.textContent).toContain('Completá el nombre.');
+    httpMock.expectNone(`${environment.apiUrl}/members`);
+  });
+
   it('confirmDelete borra el socio, cierra el detalle si estaba abierto y recarga', () => {
     component.members.set([MEMBER]);
     component.selectMember(MEMBER);

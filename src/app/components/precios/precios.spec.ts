@@ -109,6 +109,57 @@ describe('Precios', () => {
     expect(component.successMessage()).toBe('Precio actualizado.');
   });
 
+  it('el listado se muestra correctamente en pantalla', () => {
+    fixture.detectChanges();
+    httpMock.expectOne(`${environment.apiUrl}/price-rules`).flush([WEEKDAY_18, WEEKEND]);
+    fixture.detectChanges();
+
+    const items = fixture.nativeElement.querySelectorAll('.pr__item');
+    expect(items.length).toBe(2);
+    expect(items[0].textContent).toContain('18:00');
+    expect(items[0].textContent).toContain('3000');
+    expect(items[1].textContent).toContain('Fin de semana');
+  });
+
+  it('alta camino feliz: el modal se cierra y se ve el mensaje de éxito', () => {
+    fixture.detectChanges();
+    httpMock.expectOne(`${environment.apiUrl}/price-rules`).flush([]);
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelector('.pr__list-header .btn-primary').click();
+    fixture.detectChanges();
+
+    const price = fixture.nativeElement.querySelector('#pr-price');
+    price.value = '3500';
+    price.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelector('.pr__modal-actions .btn-primary').click();
+
+    httpMock.expectOne(`${environment.apiUrl}/price-rules`).flush({ ...WEEKDAY_8, pricePerHour: 3500 });
+    httpMock.expectOne(`${environment.apiUrl}/price-rules`).flush([{ ...WEEKDAY_8, pricePerHour: 3500 }]);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.pr__overlay')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.banner-success').textContent).toContain('Precio creado.');
+  });
+
+  it('alta con error de validación: el error se ve dentro del modal', () => {
+    fixture.detectChanges();
+    httpMock.expectOne(`${environment.apiUrl}/price-rules`).flush([]);
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelector('.pr__list-header .btn-primary').click();
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelector('.pr__modal-actions .btn-primary').click();
+    fixture.detectChanges();
+
+    const errorBanner = fixture.nativeElement.querySelector('.pr__modal .banner-danger');
+    expect(errorBanner.textContent).toContain('El precio por hora debe ser mayor a 0.');
+    httpMock.expectNone(`${environment.apiUrl}/price-rules`);
+  });
+
   it('confirmDelete borra la regla y recarga la lista', () => {
     component.askDelete('r1');
     component.confirmDelete();
