@@ -62,6 +62,7 @@ describe('Stock', () => {
   it('al iniciar carga los productos', () => {
     component.ngOnInit();
     httpMock.expectOne(`${environment.apiUrl}/products`).flush([PADDLE, BALLS]);
+    httpMock.expectOne(r => r.url === `${environment.apiUrl}/product-sales`).flush([]);
     expect(component.products()).toEqual([PADDLE, BALLS]);
   });
 
