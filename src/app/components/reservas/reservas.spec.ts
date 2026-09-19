@@ -4,6 +4,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideRouter } from '@angular/router';
 import { Reservas } from './reservas';
 import { Booking } from '../../services/bookings.service';
+import { RecurringBooking } from '../../services/recurring-bookings.service';
 import { Court } from '../../services/courts.service';
 import { Member } from '../../services/members.service';
 import { environment } from '../../../environments/environment';
@@ -47,6 +48,17 @@ const BOOKING: Booking = {
   cancellationFee: 0,
   isRecurring: false,
   recurringBookingId: null,
+};
+
+const RECURRING: RecurringBooking = {
+  id: 'r1',
+  courtId: 'c1',
+  customerName: 'Ana',
+  customerPhone: '333',
+  weekday: 3,
+  startHour: 10,
+  endHour: 12,
+  memberId: null,
 };
 
 describe('Reservas', () => {
@@ -305,5 +317,78 @@ describe('Reservas', () => {
 
     expect(component.detailBooking()).toBeNull();
     expect(component.successMessage()).toBe('Reserva eliminada.');
+  });
+
+  it('loadRecurring carga el listado de turnos fijos', () => {
+    component.loadRecurring();
+
+    httpMock.expectOne(`${environment.apiUrl}/recurring-bookings`).flush([RECURRING]);
+
+    expect(component.recurringBookings()).toEqual([RECURRING]);
+    expect(component.recurringError()).toBe('');
+  });
+
+  it('si falla la carga de turnos fijos muestra un error', () => {
+    component.loadRecurring();
+
+    httpMock
+      .expectOne(`${environment.apiUrl}/recurring-bookings`)
+      .flush({ error: 'falló' }, { status: 500, statusText: 'Server Error' });
+
+    expect(component.recurringError()).toBe('No se pudieron cargar los turnos fijos. Probá de nuevo.');
+  });
+
+  it('courtName y weekdayLabel resuelven cancha y día a partir del turno fijo', () => {
+    component.courts.set([COURT_1, COURT_2]);
+
+    expect(component.courtName('c1')).toBe('Cancha 1');
+    expect(component.courtName('inexistente')).toBe('—');
+    expect(component.weekdayLabel(3)).toBe('Miércoles');
+    expect(component.weekdayLabel(0)).toBe('Domingo');
+  });
+
+  it('askDeleteRecurring / cancelDeleteRecurring controlan la confirmación de borrado', () => {
+    component.askDeleteRecurring('r1');
+    expect(component.recurringDeleteId()).toBe('r1');
+
+    component.cancelDeleteRecurring();
+    expect(component.recurringDeleteId()).toBeNull();
+  });
+
+  it('confirmDeleteRecurring elimina el turno fijo y recarga el listado y la grilla', () => {
+    component.date.set('2026-09-18');
+    component.recurringBookings.set([RECURRING]);
+    component.askDeleteRecurring('r1');
+    component.confirmDeleteRecurring();
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/recurring-bookings/r1`);
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null);
+
+    httpMock.expectOne(r => r.url === `${environment.apiUrl}/recurring-bookings` && r.method === 'GET').flush([]);
+    httpMock.expectOne(r => r.url === `${environment.apiUrl}/bookings` && r.method === 'GET').flush([]);
+
+    expect(component.recurringDeleteId()).toBeNull();
+    expect(component.recurringDeleting()).toBeFalse();
+    expect(component.successMessage()).toBe('Turno fijo eliminado.');
+  });
+
+  it('si falla el borrado de un turno fijo muestra un error y no recarga', () => {
+    component.recurringBookings.set([RECURRING]);
+    component.askDeleteRecurring('r1');
+    component.confirmDeleteRecurring();
+
+    httpMock
+      .expectOne(`${environment.apiUrl}/recurring-bookings/r1`)
+      .flush({ error: 'falló' }, { status: 500, statusText: 'Server Error' });
+
+    expect(component.recurringDeleteId()).toBeNull();
+    expect(component.recurringDeleting()).toBeFalse();
+    expect(component.recurringError()).toBe('No se pudo eliminar el turno fijo. Probá de nuevo.');
+  });
+
+  it('confirmDeleteRecurring no hace nada si no hay id seleccionado', () => {
+    component.confirmDeleteRecurring();
+    httpMock.expectNone(r => r.url.startsWith(`${environment.apiUrl}/recurring-bookings/`));
   });
 });
