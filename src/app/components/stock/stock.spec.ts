@@ -200,6 +200,7 @@ describe('Stock', () => {
     req.flush({ id: 's1', productId: 'p1', quantity: 2, amount: 1000, bookingId: 'b1', paymentMethod: 'tarjeta', createdAt: '2026-09-18' });
 
     httpMock.expectOne(`${environment.apiUrl}/products`).flush([]);
+    httpMock.expectOne(r => r.url === `${environment.apiUrl}/product-sales`).flush([]);
 
     expect(component.sellProduct()).toBeNull();
     expect(component.successMessage()).toBe('Venta registrada.');
