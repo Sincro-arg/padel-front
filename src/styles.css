@@ -302,6 +302,24 @@ input[type="file"]::file-selector-button:hover { background: var(--color-primary
   margin-top: .3rem;
 }
 
+/* ── Transición de aparición de modales ─────────────────────────────────
+   El overlay/modal de cada pantalla entra al DOM de golpe (@if de Angular),
+   así que una transition normal no alcanza a dispararse: hace falta una
+   animation, que sí corre al montarse el elemento. */
+@keyframes modal-overlay-in {
+  from { opacity: 0; }
+}
+@keyframes modal-panel-in {
+  from { opacity: 0; transform: scale(.96); }
+}
+
+.rsv__overlay, .cj__overlay, .sc__overlay, .cn__overlay, .pr__overlay, .tn__overlay {
+  animation: modal-overlay-in .15s ease;
+}
+.rsv__modal, .cj__modal, .sc__modal, .cn__modal, .pr__modal, .tn__modal {
+  animation: modal-panel-in .15s ease;
+}
+
 /* Layout mobile-first: la app arranca a ancho de teléfono y se agranda
    después con media queries en cada componente. */
 .container {
