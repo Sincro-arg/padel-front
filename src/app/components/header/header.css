@@ -20,6 +20,7 @@
   font-weight: 800;
   font-size: 1.05rem;
   letter-spacing: .01em;
+  flex-shrink: 0;
 }
 .hd__brand:hover { text-decoration: none; }
 
@@ -36,7 +37,14 @@
   display: flex;
   align-items: center;
   gap: .25rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
+.hd__nav::-webkit-scrollbar { display: none; }
 .hd__nav-link {
   color: #fff;
   opacity: .85;
@@ -44,6 +52,8 @@
   font-weight: 600;
   padding: .4rem .7rem;
   border-radius: var(--radius-sm);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .hd__nav-link:hover { opacity: 1; text-decoration: none; background: rgba(255,255,255,.15); }
 .hd__nav-link--active { opacity: 1; background: rgba(255,255,255,.22); }
@@ -64,6 +74,7 @@
   display: flex;
   align-items: center;
   gap: .5rem;
+  flex-shrink: 0;
 }
 .hd__user-info {
   display: flex;
