@@ -85,6 +85,14 @@
 
 .pr__retry { margin-left: .75rem; }
 
+@keyframes pr-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes pr-modal-in {
+  from { opacity: 0; transform: scale(.96) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
 .pr__overlay {
   position: fixed;
   inset: 0;
@@ -95,12 +103,14 @@
   padding: 1rem;
   z-index: 50;
   overflow-y: auto;
+  animation: pr-overlay-in .18s ease-out;
 }
 .pr__modal {
   width: 100%;
   max-width: 420px;
   padding: 1.5rem;
   margin: auto;
+  animation: pr-modal-in .22s ease-out;
 }
 .pr__row {
   display: flex;

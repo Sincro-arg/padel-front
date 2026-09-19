@@ -126,6 +126,14 @@
 
 .tn__retry { margin-left: .75rem; }
 
+@keyframes tn-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes tn-modal-in {
+  from { opacity: 0; transform: scale(.96) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
 .tn__overlay {
   position: fixed;
   inset: 0;
@@ -136,12 +144,14 @@
   padding: 1rem;
   z-index: 50;
   overflow-y: auto;
+  animation: tn-overlay-in .18s ease-out;
 }
 .tn__modal {
   width: 100%;
   max-width: 420px;
   padding: 1.5rem;
   margin: auto;
+  animation: tn-modal-in .22s ease-out;
 }
 .tn__modal-actions {
   display: flex;
