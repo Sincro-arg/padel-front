@@ -25,6 +25,7 @@ describe('Login', () => {
 
   afterEach(() => {
     httpMock.verify();
+    localStorage.clear();
   });
 
   it('should create', () => {
