@@ -1,12 +1,15 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Booking, BookingInput, BookingsService } from '../../services/bookings.service';
-import { RecurringBookingsService } from '../../services/recurring-bookings.service';
+import { RecurringBooking, RecurringBookingsService } from '../../services/recurring-bookings.service';
 import { Court, CourtsService } from '../../services/courts.service';
 import { Member, MembersService } from '../../services/members.service';
 
 /** Cancha abre a las 8 y cierra a las 24 → bloques de 1hs, último arranca a las 23. */
 const HOURS: number[] = Array.from({ length: 16 }, (_, i) => i + 8);
+
+/** weekday: 0=domingo … 6=sábado, igual que RecurringBooking.weekday */
+const WEEKDAY_LABELS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
 function todayIso(): string {
   const d = new Date();
@@ -42,11 +45,13 @@ export class Reservas implements OnInit {
   private readonly membersSvc = inject(MembersService);
 
   readonly hours = HOURS;
+  readonly weekdayLabels = WEEKDAY_LABELS;
 
   readonly date = signal(todayIso());
   readonly courts = signal<Court[]>([]);
   readonly bookings = signal<Booking[]>([]);
   readonly members = signal<Member[]>([]);
+  readonly recurringBookings = signal<RecurringBooking[]>([]);
 
   readonly loading = signal(false);
   readonly error = signal('');
@@ -97,9 +102,15 @@ export class Reservas implements OnInit {
   readonly deleteSubmitting = signal(false);
   readonly detailError = signal('');
 
+  // ── Turnos fijos (recurring) ──────────────────────────────────────────
+  readonly recurringToDelete = signal<RecurringBooking | null>(null);
+  readonly deletingRecurring = signal(false);
+  readonly recurringDeleteError = signal('');
+
   ngOnInit(): void {
     this.courtsSvc.getCourts().subscribe({ next: c => this.courts.set(c) });
     this.membersSvc.getMembers().subscribe({ next: m => this.members.set(m) });
+    this.loadRecurring();
     this.load();
   }
 
@@ -130,6 +141,45 @@ export class Reservas implements OnInit {
 
   memberLabel(m: Member): string {
     return m.isBlocked ? `${m.name} (debe ${m.monthsOwed} cuotas)` : m.name;
+  }
+
+  courtName(courtId: string): string {
+    return this.courts().find(c => c.id === courtId)?.name ?? courtId;
+  }
+
+  // ── Turnos fijos (recurring) ──────────────────────────────────────────
+  loadRecurring(): void {
+    this.recurringSvc.getRecurringBookings().subscribe({ next: list => this.recurringBookings.set(list) });
+  }
+
+  askDeleteRecurring(rb: RecurringBooking): void {
+    this.recurringToDelete.set(rb);
+    this.recurringDeleteError.set('');
+  }
+
+  cancelDeleteRecurring(): void {
+    if (this.deletingRecurring()) return;
+    this.recurringToDelete.set(null);
+  }
+
+  confirmDeleteRecurring(): void {
+    const rb = this.recurringToDelete();
+    if (!rb || this.deletingRecurring()) return;
+    this.deletingRecurring.set(true);
+    this.recurringDeleteError.set('');
+    this.recurringSvc.deleteRecurringBooking(rb.id).subscribe({
+      next: () => {
+        this.deletingRecurring.set(false);
+        this.recurringToDelete.set(null);
+        this.flash('Turno fijo eliminado.');
+        this.loadRecurring();
+        this.load();
+      },
+      error: err => {
+        this.deletingRecurring.set(false);
+        this.recurringDeleteError.set(err?.error?.error ?? 'No se pudo eliminar el turno fijo.');
+      },
+    });
   }
 
   // ── Alta ──────────────────────────────────────────────────────────
@@ -247,6 +297,7 @@ export class Reservas implements OnInit {
             this.fSubmitting.set(false);
             this.showForm.set(false);
             this.flash('Turno fijo creado: se generaron las próximas 8 semanas.');
+            this.loadRecurring();
             this.load();
           },
           error: err => {

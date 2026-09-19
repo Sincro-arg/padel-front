@@ -6,6 +6,7 @@ import { Reservas } from './reservas';
 import { Booking } from '../../services/bookings.service';
 import { Court } from '../../services/courts.service';
 import { Member } from '../../services/members.service';
+import { RecurringBooking } from '../../services/recurring-bookings.service';
 import { environment } from '../../../environments/environment';
 
 const COURT_1: Court = { id: 'c1', name: 'Cancha 1' };
@@ -49,6 +50,17 @@ const BOOKING: Booking = {
   recurringBookingId: null,
 };
 
+const RECURRING: RecurringBooking = {
+  id: 'r1',
+  courtId: 'c1',
+  customerName: 'Carlos',
+  customerPhone: '444',
+  weekday: 3,
+  startHour: 18,
+  endHour: 19,
+  memberId: null,
+};
+
 describe('Reservas', () => {
   let component: Reservas;
   let fixture: ComponentFixture<Reservas>;
@@ -73,15 +85,17 @@ describe('Reservas', () => {
     expect(component).toBeTruthy();
   });
 
-  it('al iniciar carga canchas, socios y las reservas del día', () => {
+  it('al iniciar carga canchas, socios, turnos fijos y las reservas del día', () => {
     component.ngOnInit();
 
     httpMock.expectOne(`${environment.apiUrl}/courts`).flush([COURT_1, COURT_2]);
     httpMock.expectOne(`${environment.apiUrl}/members`).flush([MEMBER_OK]);
+    httpMock.expectOne(`${environment.apiUrl}/recurring-bookings`).flush([RECURRING]);
     httpMock.expectOne(r => r.url === `${environment.apiUrl}/bookings`).flush([BOOKING]);
 
     expect(component.courts()).toEqual([COURT_1, COURT_2]);
     expect(component.members()).toEqual([MEMBER_OK]);
+    expect(component.recurringBookings()).toEqual([RECURRING]);
     expect(component.bookings()).toEqual([BOOKING]);
   });
 
@@ -229,6 +243,7 @@ describe('Reservas', () => {
     });
     req.flush({ id: 'r1', ...req.request.body });
 
+    httpMock.expectOne(`${environment.apiUrl}/recurring-bookings`).flush([]);
     httpMock.expectOne(r => r.url === `${environment.apiUrl}/bookings` && r.method === 'GET').flush([]);
 
     expect(component.successMessage()).toBe('Turno fijo creado: se generaron las próximas 8 semanas.');
@@ -303,5 +318,55 @@ describe('Reservas', () => {
 
     expect(component.detailBooking()).toBeNull();
     expect(component.successMessage()).toBe('Reserva eliminada.');
+  });
+
+  it('loadRecurring trae los turnos fijos cargados', () => {
+    component.loadRecurring();
+
+    httpMock.expectOne(`${environment.apiUrl}/recurring-bookings`).flush([RECURRING]);
+
+    expect(component.recurringBookings()).toEqual([RECURRING]);
+  });
+
+  it('courtName resuelve el nombre de la cancha del turno fijo', () => {
+    component.courts.set([COURT_1, COURT_2]);
+    expect(component.courtName('c2')).toBe('Cancha 2');
+    expect(component.courtName('inexistente')).toBe('inexistente');
+  });
+
+  it('askDeleteRecurring / cancelDeleteRecurring abren y cierran la confirmación', () => {
+    component.askDeleteRecurring(RECURRING);
+    expect(component.recurringToDelete()).toEqual(RECURRING);
+
+    component.cancelDeleteRecurring();
+    expect(component.recurringToDelete()).toBeNull();
+  });
+
+  it('confirmDeleteRecurring elimina el turno fijo y recarga la lista y la grilla', () => {
+    component.date.set('2026-09-18');
+    component.recurringBookings.set([RECURRING]);
+    component.askDeleteRecurring(RECURRING);
+    component.confirmDeleteRecurring();
+
+    httpMock.expectOne(`${environment.apiUrl}/recurring-bookings/r1`).flush(null);
+    httpMock.expectOne(`${environment.apiUrl}/recurring-bookings`).flush([]);
+    httpMock.expectOne(r => r.url === `${environment.apiUrl}/bookings` && r.method === 'GET').flush([]);
+
+    expect(component.recurringToDelete()).toBeNull();
+    expect(component.recurringBookings()).toEqual([]);
+    expect(component.successMessage()).toBe('Turno fijo eliminado.');
+  });
+
+  it('un error al eliminar el turno fijo se muestra en el modal de confirmación', () => {
+    component.askDeleteRecurring(RECURRING);
+    component.confirmDeleteRecurring();
+
+    httpMock
+      .expectOne(`${environment.apiUrl}/recurring-bookings/r1`)
+      .flush({ error: 'No se pudo eliminar el turno fijo' }, { status: 500, statusText: 'Server Error' });
+
+    expect(component.recurringDeleteError()).toBe('No se pudo eliminar el turno fijo');
+    expect(component.deletingRecurring()).toBeFalse();
+    expect(component.recurringToDelete()).toEqual(RECURRING);
   });
 });

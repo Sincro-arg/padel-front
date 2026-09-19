@@ -77,6 +77,29 @@
       </table>
     </div>
   }
+
+  <div class="card rsv__recurring">
+    <h2>Turnos fijos</h2>
+    @if (recurringBookings().length === 0) {
+      <p class="rsv__muted">No hay turnos fijos cargados.</p>
+    } @else {
+      <ul class="rsv__recurring-list">
+        @for (rb of recurringBookings(); track rb.id) {
+          <li class="rsv__recurring-item">
+            <div>
+              <strong>{{ rb.customerName }}</strong>
+              <span class="rsv__muted">
+                · {{ courtName(rb.courtId) }} · {{ weekdayLabels[rb.weekday] }} {{ rb.startHour }}-{{ rb.endHour }}hs
+              </span>
+            </div>
+            <button type="button" class="btn btn-ghost rsv__delete-link" (click)="askDeleteRecurring(rb)">
+              Eliminar
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </div>
 </div>
 
 <!-- Modal: alta/edición de reserva -->
@@ -232,6 +255,32 @@
           <button type="button" class="btn btn-ghost" (click)="closeDetail()">Cerrar</button>
         </div>
       }
+    </div>
+  </div>
+}
+
+<!-- Modal: eliminar turno fijo -->
+@if (recurringToDelete(); as rb) {
+  <div class="rsv__overlay" (click)="cancelDeleteRecurring()">
+    <div class="rsv__modal card" (click)="$event.stopPropagation()">
+      <h2>Eliminar turno fijo</h2>
+      <p class="rsv__muted">
+        {{ rb.customerName }} · {{ courtName(rb.courtId) }} · {{ weekdayLabels[rb.weekday] }} {{ rb.startHour }}-{{ rb.endHour }}hs
+      </p>
+
+      @if (recurringDeleteError()) {
+        <div class="banner banner-danger" role="alert">{{ recurringDeleteError() }}</div>
+      }
+
+      <p>¿Eliminar este turno fijo? También se cancelan todas las reservas futuras que generó.</p>
+      <div class="rsv__modal-actions">
+        <button type="button" class="btn btn-ghost" [disabled]="deletingRecurring()" (click)="cancelDeleteRecurring()">
+          Volver
+        </button>
+        <button type="button" class="btn btn-danger" [disabled]="deletingRecurring()" (click)="confirmDeleteRecurring()">
+          {{ deletingRecurring() ? 'Eliminando…' : 'Sí, eliminar' }}
+        </button>
+      </div>
     </div>
   </div>
 }

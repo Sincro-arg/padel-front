@@ -97,4 +97,93 @@ describe('Tournaments', () => {
     expect(component.mError()).toBe('Las dos parejas del partido tienen que ser distintas.');
     httpMock.expectNone(`${environment.apiUrl}/tournaments/t1/matches`);
   });
+
+  it('submitTournament con editingTournamentId edita el torneo (PUT) y recarga la lista', () => {
+    component.editingTournamentId.set('t1');
+    component.tName.set('Apertura Editada');
+    component.tDate.set('2026-10-05');
+    component.tFee.set(1500);
+    component.submitTournament();
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/tournaments/t1`);
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toEqual({ name: 'Apertura Editada', date: '2026-10-05', registrationFee: 1500 });
+    req.flush({ ...TOURNAMENT, name: 'Apertura Editada', date: '2026-10-05', registrationFee: 1500 });
+
+    httpMock.expectOne(`${environment.apiUrl}/tournaments`).flush([TOURNAMENT]);
+
+    expect(component.showTournamentForm()).toBeFalse();
+    expect(component.successMessage()).toBe('Torneo actualizado.');
+  });
+
+  it('confirmDeleteTournament elimina el torneo y recarga la lista', () => {
+    component.deleteTournamentId.set('t1');
+    component.confirmDeleteTournament();
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/tournaments/t1`);
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null);
+
+    httpMock.expectOne(`${environment.apiUrl}/tournaments`).flush([]);
+
+    expect(component.deleteTournamentId()).toBeNull();
+    expect(component.deletingTournament()).toBeFalse();
+    expect(component.successMessage()).toBe('Torneo eliminado.');
+  });
+
+  it('submitPair inscribe la pareja con éxito y recarga la lista', () => {
+    component.selectedId.set('t1');
+    component.pPlayer1.set('Juan');
+    component.pPlayer2.set('Pedro');
+    component.pPaid.set(true);
+    component.pMethod.set('efectivo');
+    component.submitPair();
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/tournaments/t1/pairs`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ player1: 'Juan', player2: 'Pedro', paid: true, paymentMethod: 'efectivo' });
+    req.flush(PAIR);
+
+    httpMock.expectOne(`${environment.apiUrl}/tournaments/t1/pairs`).flush([PAIR]);
+
+    expect(component.showPairForm()).toBeFalse();
+    expect(component.successMessage()).toBe('Pareja inscripta.');
+  });
+
+  it('confirmDeletePair elimina la pareja y recarga la lista', () => {
+    component.selectedId.set('t1');
+    component.deletePairId.set('p1');
+    component.confirmDeletePair();
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/tournaments/pairs/p1`);
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null);
+
+    httpMock.expectOne(`${environment.apiUrl}/tournaments/t1/pairs`).flush([]);
+
+    expect(component.deletePairId()).toBeNull();
+    expect(component.deletingPair()).toBeFalse();
+    expect(component.successMessage()).toBe('Pareja eliminada.');
+  });
+
+  it('submitResult carga el resultado del partido y recarga el fixture', () => {
+    component.selectedId.set('t1');
+    component.resultMatchId.set('m1');
+    component.matches.set([
+      { id: 'm1', tournamentId: 't1', round: 'Ronda 1', pair1Id: 'p1', pair2Id: 'p2', score: null, winnerPairId: null },
+    ]);
+    component.rScore.set('6-4 6-2');
+    component.rWinnerPairId.set('p1');
+    component.submitResult();
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/tournaments/matches/m1/result`);
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toEqual({ score: '6-4 6-2', winnerPairId: 'p1' });
+    req.flush({ id: 'm1', tournamentId: 't1', round: 'Ronda 1', pair1Id: 'p1', pair2Id: 'p2', score: '6-4 6-2', winnerPairId: 'p1' });
+
+    httpMock.expectOne(`${environment.apiUrl}/tournaments/t1/matches`).flush([]);
+
+    expect(component.resultMatchId()).toBeNull();
+    expect(component.successMessage()).toBe('Resultado cargado.');
+  });
 });
