@@ -39,6 +39,7 @@ describe('ProductsService', () => {
     const result: ProductSale = {
       id: 's1',
       productId: 'p1',
+      productName: 'Paleta',
       quantity: 2,
       amount: 2000,
       bookingId: null,
@@ -61,6 +62,7 @@ describe('ProductsService', () => {
     const result: ProductSale = {
       id: 's2',
       productId: 'p2',
+      productName: 'Pelotas',
       quantity: 1,
       amount: 500,
       bookingId: 'b1',
