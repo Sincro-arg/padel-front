@@ -45,6 +45,22 @@ describe('AuthService', () => {
     expect(localStorage.getItem('padel_user')).toBe(JSON.stringify(USER));
   });
 
+  it('login con credenciales inválidas propaga el error y no toca la sesión', () => {
+    let capturedStatus: number | undefined;
+
+    service.login('ana', 'mala-clave').subscribe({
+      next: () => fail('no debería resolver con credenciales inválidas'),
+      error: err => (capturedStatus = err.status),
+    });
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/auth/login`);
+    req.flush({ error: 'Usuario o contraseña inválidos' }, { status: 401, statusText: 'Unauthorized' });
+
+    expect(capturedStatus).toBe(401);
+    expect(service.currentUser()).toBeNull();
+    expect(localStorage.getItem('padel_user')).toBeNull();
+  });
+
   it('isAdmin refleja el rol del usuario logueado', () => {
     service.currentUser.set(USER);
     expect(service.isAdmin()).toBeTrue();

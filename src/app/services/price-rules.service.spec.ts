@@ -35,6 +35,20 @@ describe('PriceRulesService', () => {
     expect(result).toEqual([rule]);
   });
 
+  it('getPriceRules propaga el error si el back falla', () => {
+    let capturedStatus: number | undefined;
+    service.getPriceRules().subscribe({
+      next: () => fail('no debería resolver'),
+      error: err => (capturedStatus = err.status),
+    });
+
+    httpMock
+      .expectOne({ url: base, method: 'GET' })
+      .flush({ error: 'Error al listar precios' }, { status: 500, statusText: 'Internal Server Error' });
+
+    expect(capturedStatus).toBe(500);
+  });
+
   it('createPriceRule hace POST con el body', () => {
     const body = { dayType: 'weekday' as const, startHour: 8, endHour: 20, pricePerHour: 1000 };
     service.createPriceRule(body).subscribe();
@@ -42,6 +56,21 @@ describe('PriceRulesService', () => {
     const req = httpMock.expectOne({ url: base, method: 'POST' });
     expect(req.request.body).toEqual(body);
     req.flush(rule);
+  });
+
+  it('createPriceRule propaga el error de validación del back', () => {
+    const body = { dayType: 'weekday' as const, startHour: 20, endHour: 8, pricePerHour: 1000 };
+    let capturedError: { error: string } | undefined;
+
+    service.createPriceRule(body).subscribe({
+      next: () => fail('no debería resolver con datos inválidos'),
+      error: err => (capturedError = err.error),
+    });
+
+    const req = httpMock.expectOne({ url: base, method: 'POST' });
+    req.flush({ error: 'startHour debe ser menor que endHour' }, { status: 400, statusText: 'Bad Request' });
+
+    expect(capturedError?.error).toBe('startHour debe ser menor que endHour');
   });
 
   it('updatePriceRule hace PUT a /price-rules/{id}', () => {

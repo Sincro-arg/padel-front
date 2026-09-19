@@ -29,6 +29,20 @@ describe('CourtsService', () => {
     expect(result).toEqual([court]);
   });
 
+  it('getCourts propaga el error si el back falla', () => {
+    let capturedStatus: number | undefined;
+    service.getCourts().subscribe({
+      next: () => fail('no debería resolver'),
+      error: err => (capturedStatus = err.status),
+    });
+
+    httpMock
+      .expectOne({ url: base, method: 'GET' })
+      .flush({ error: 'Error al listar canchas' }, { status: 500, statusText: 'Internal Server Error' });
+
+    expect(capturedStatus).toBe(500);
+  });
+
   it('createCourt hace POST con el body', () => {
     const body = { name: 'Cancha 1' };
     service.createCourt(body).subscribe();
@@ -36,6 +50,21 @@ describe('CourtsService', () => {
     const req = httpMock.expectOne({ url: base, method: 'POST' });
     expect(req.request.body).toEqual(body);
     req.flush(court);
+  });
+
+  it('createCourt propaga el error de validación del back', () => {
+    const body = { name: '' };
+    let capturedError: { error: string } | undefined;
+
+    service.createCourt(body).subscribe({
+      next: () => fail('no debería resolver con datos inválidos'),
+      error: err => (capturedError = err.error),
+    });
+
+    const req = httpMock.expectOne({ url: base, method: 'POST' });
+    req.flush({ error: 'El nombre de la cancha es obligatorio' }, { status: 400, statusText: 'Bad Request' });
+
+    expect(capturedError?.error).toBe('El nombre de la cancha es obligatorio');
   });
 
   it('updateCourt hace PUT a /courts/{id}', () => {
