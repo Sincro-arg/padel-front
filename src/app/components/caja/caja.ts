@@ -168,8 +168,7 @@ export class Caja implements OnInit {
           this.selectedDebt.set(null);
           this.confirming.set(false);
           this.successMessage.set(`Pago de $${amount} registrado para ${name}.`);
-          this.loadDebts();
-          if (this.isAdmin()) this.loadSummary();
+          this.refreshAfterPaymentChange(debt.bookingId);
           setTimeout(() => this.successMessage.set(''), 4000);
         },
         error: err => {
