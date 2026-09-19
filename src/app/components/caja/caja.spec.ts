@@ -133,6 +133,21 @@ describe('Caja', () => {
     expect(component.selectedDebt()).toBeNull();
   });
 
+  it('confirmPay muestra el error que manda el back y no cierra el modal', () => {
+    component.openPay(DEBT);
+    component.confirmPay();
+
+    expect(component.paySubmitting()).toBeTrue();
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/bookings/${DEBT.bookingId}/payments`);
+    req.flush({ error: 'El monto supera la deuda.' }, { status: 400, statusText: 'Bad Request' });
+
+    expect(component.payError()).toBe('El monto supera la deuda.');
+    expect(component.paySubmitting()).toBeFalse();
+    expect(component.confirming()).toBeFalse();
+    expect(component.selectedDebt()).toEqual(DEBT);
+  });
+
   it('togglePayments carga los pagos de la reserva y togglePayments de nuevo los oculta', () => {
     component.togglePayments(PAID_BOOKING);
     httpMock.expectOne(`${environment.apiUrl}/bookings/${PAID_BOOKING.id}/payments`).flush([PAYMENT]);
