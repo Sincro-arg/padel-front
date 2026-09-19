@@ -54,6 +54,31 @@ describe('RecurringBookingsService', () => {
     req.flush(recurring);
   });
 
+  it('createRecurringBooking propaga el 409 cuando la cancha ya tiene reserva en ese horario', () => {
+    const body = {
+      courtId: 'c1',
+      customerName: 'Juan',
+      customerPhone: '111',
+      weekday: 3,
+      startHour: 10,
+      endHour: 11,
+    };
+    let error: any;
+    service.createRecurringBooking(body).subscribe({
+      next: () => fail('no deberia resolver'),
+      error: (err) => (error = err),
+    });
+
+    const req = httpMock.expectOne({ url: base, method: 'POST' });
+    req.flush(
+      { error: 'La cancha ya tiene una reserva en ese horario' },
+      { status: 409, statusText: 'Conflict' },
+    );
+
+    expect(error.status).toBe(409);
+    expect(error.error.error).toBe('La cancha ya tiene una reserva en ese horario');
+  });
+
   it('deleteRecurringBooking hace DELETE a /recurring-bookings/{id}', () => {
     service.deleteRecurringBooking('r1').subscribe();
     httpMock.expectOne({ url: `${base}/r1`, method: 'DELETE' }).flush(null);

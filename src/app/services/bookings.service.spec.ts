@@ -66,6 +66,31 @@ describe('BookingsService', () => {
     req.flush(booking);
   });
 
+  it('createBooking propaga el 409 cuando la cancha ya tiene reserva en ese horario', () => {
+    const body = {
+      courtId: 'c1',
+      customerName: 'Juan',
+      customerPhone: '111',
+      date: '2026-09-18',
+      startHour: 10,
+      endHour: 11,
+    };
+    let error: any;
+    service.createBooking(body).subscribe({
+      next: () => fail('no deberia resolver'),
+      error: (err) => (error = err),
+    });
+
+    const req = httpMock.expectOne({ url: base, method: 'POST' });
+    req.flush(
+      { error: 'La cancha ya tiene una reserva en ese horario' },
+      { status: 409, statusText: 'Conflict' },
+    );
+
+    expect(error.status).toBe(409);
+    expect(error.error.error).toBe('La cancha ya tiene una reserva en ese horario');
+  });
+
   it('updateBooking hace PUT a /bookings/{id}', () => {
     const body = {
       courtId: 'c1',
